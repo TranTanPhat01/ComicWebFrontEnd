@@ -22,7 +22,7 @@ export function ChapterNavigation({
       {/* Previous Chapter button */}
       {previousSlug ? (
         <Link
-          href={`/truyen/${storySlug}/chuong/${previousSlug}`}
+          href={`/truyen/${storySlug}?chuong-id=${previousSlug}`}
           className="chapter-navigation__btn chapter-navigation__btn--prev"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -58,7 +58,7 @@ export function ChapterNavigation({
       {/* Next Chapter button */}
       {nextSlug ? (
         <Link
-          href={`/truyen/${storySlug}/chuong/${nextSlug}`}
+          href={`/truyen/${storySlug}?chuong-id=${nextSlug}`}
           className="chapter-navigation__btn chapter-navigation__btn--next"
         >
           <span className="chapter-navigation__btn-text">Chương sau</span>

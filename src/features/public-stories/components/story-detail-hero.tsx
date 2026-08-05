@@ -145,7 +145,7 @@ export function StoryDetailHero({
             {/* Continue Reading button — shows when user has history for this story */}
             {readingEntry && (
               <Link
-                href={`/truyen/${story.slug}/chuong/${readingEntry.chapterSlug}`}
+                href={`/truyen/${story.slug}?chuong-id=${readingEntry.chapterSlug}`}
                 className="story-detail-hero__btn story-detail-hero__btn--continue"
                 title={`Tiếp tục đọc: Chương ${readingEntry.chapterNumber}`}
               >
@@ -158,7 +158,7 @@ export function StoryDetailHero({
 
             {hasChapters && firstChapterSlug ? (
               <Link
-                href={`/truyen/${story.slug}/chuong/${firstChapterSlug}`}
+                href={`/truyen/${story.slug}?chuong-id=${firstChapterSlug}`}
                 className="story-detail-hero__btn story-detail-hero__btn--primary"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -178,7 +178,7 @@ export function StoryDetailHero({
 
             {hasChapters && latestChapterSlug ? (
               <Link
-                href={`/truyen/${story.slug}/chuong/${latestChapterSlug}`}
+                href={`/truyen/${story.slug}?chuong-id=${latestChapterSlug}`}
                 className="story-detail-hero__btn story-detail-hero__btn--secondary"
               >
                 MỚI NHẤT

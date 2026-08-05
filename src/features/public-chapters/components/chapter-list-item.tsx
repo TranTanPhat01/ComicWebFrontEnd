@@ -25,7 +25,7 @@ export function ChapterListItem({ chapter, storySlug, now }: ChapterListItemProp
   return (
     <div className="chapter-list-item">
       <Link
-        href={`/truyen/${storySlug}/chuong/${chapter.slug}`}
+        href={`/truyen/${storySlug}?chuong-id=${chapter.slug}`}
         className="chapter-list-item__link"
       >
         <div className="chapter-list-item__left">

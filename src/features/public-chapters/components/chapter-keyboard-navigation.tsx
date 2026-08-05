@@ -34,9 +34,9 @@ export function ChapterKeyboardNavigation({
       }
 
       if (event.key === "ArrowLeft" && previousSlug) {
-        router.push(`/truyen/${storySlug}/chuong/${previousSlug}`);
+        router.push(`/truyen/${storySlug}?chuong-id=${previousSlug}`);
       } else if (event.key === "ArrowRight" && nextSlug) {
-        router.push(`/truyen/${storySlug}/chuong/${nextSlug}`);
+        router.push(`/truyen/${storySlug}?chuong-id=${nextSlug}`);
       }
     };
 

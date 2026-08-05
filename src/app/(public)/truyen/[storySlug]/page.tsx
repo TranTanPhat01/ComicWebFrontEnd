@@ -12,12 +12,16 @@ import type { ApiResponse } from "@/lib/api/api-response";
 import type { PaginatedResponse } from "@/types/pagination";
 import type { StorySlugParam } from "@/constants/routes";
 import { parseEnvelopeData } from "@/lib/api/parse-envelope";
+import { getPublicChapterBySlug } from "@/features/public-chapters/api/public-chapters.api";
+import { ChapterScreen } from "@/features/public-chapters/components/chapter-screen";
+import type { PublicChapterDetailDto } from "@/features/public-chapters/types/public-chapter.types";
 
 interface StoryPageProps {
   params: Promise<StorySlugParam>;
   searchParams: Promise<{
     page?: string;
     sort?: string;
+    "chuong-id"?: string;
   }>;
 }
 
@@ -118,6 +122,58 @@ const getCachedPublicStoryBySlug = cache(async (slug: string): Promise<ApiRespon
   return response;
 });
 
+const getCachedPublicChapter = cache(async (
+  storySlug: string,
+  chapterSlug: string
+): Promise<ApiResponse<PublicChapterDetailDto>> => {
+  const response = await getPublicChapterBySlug(storySlug, chapterSlug);
+
+  if (response.success && response.data) {
+    const unwrapped = parseEnvelopeData<PublicChapterDetailDto>(response.data);
+    if (unwrapped) {
+      return {
+        ...response,
+        data: unwrapped,
+      };
+    }
+  }
+
+  if (!response.success && env.isDevelopment) {
+    const demoStory = DEMO_STORIES.find((s) => s.slug === storySlug);
+    if (demoStory) {
+      const parts = chapterSlug.split("-");
+      const num = Number(parts[parts.length - 1]) || 1;
+
+      const previousChapter = num > 1 ? { slug: `chuong-${num - 1}`, number: num - 1, title: getChapterMockTitle(storySlug, num - 1) } : null;
+      const nextChapter = num < demoStory.chapterCount ? { slug: `chuong-${num + 1}`, number: num + 1, title: getChapterMockTitle(storySlug, num + 1) } : null;
+
+      const detail: PublicChapterDetailDto = {
+        id: num,
+        story: {
+          id: demoStory.id,
+          slug: demoStory.slug,
+          title: demoStory.title,
+        },
+        slug: chapterSlug,
+        number: num,
+        title: getChapterMockTitle(storySlug, num),
+        content: `Đây là nội dung chương ${num} của bộ truyện ${demoStory.title}...`,
+        publishedAt: new Date(Date.now() - (demoStory.chapterCount - num) * 12 * 3600 * 1000).toISOString(),
+        previousChapter,
+        nextChapter,
+      };
+
+      return {
+        success: true,
+        status: 200,
+        data: detail,
+      };
+    }
+  }
+
+  return response;
+});
+
 /**
  * Custom fetcher for chapters that supports sorting and pagination with dev fallbacks.
  */
@@ -199,8 +255,11 @@ async function getCachedChapters(
   return response;
 }
 
-export async function generateMetadata({ params }: StoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: StoryPageProps): Promise<Metadata> {
   const { storySlug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const chuongId = resolvedSearchParams["chuong-id"];
+  
   const response = await getCachedPublicStoryBySlug(storySlug);
 
   if (!response.success) {
@@ -211,6 +270,38 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   }
 
   const story = response.data;
+
+  if (chuongId) {
+    const chapterSlug = chuongId.startsWith("chuong-") ? chuongId : `chuong-${chuongId}`;
+    const chapterResponse = await getCachedPublicChapter(storySlug, chapterSlug);
+    if (chapterResponse.success && chapterResponse.data) {
+      const chapter = chapterResponse.data;
+      const title = `Chương ${chapter.number}${chapter.title ? `: ${chapter.title}` : ""} - ${story.title} | ComicWeb`;
+      const desc = `Đọc chương ${chapter.number} truyện ${story.title} online bản dịch chất lượng cao, cập nhật nhanh nhất tại ComicWeb.`;
+      const url = `${env.appUrl}/truyen/${story.slug}?chuong-id=${chapter.slug}`;
+
+      return {
+        title,
+        description: desc,
+        alternates: {
+          canonical: url,
+        },
+        openGraph: {
+          title,
+          description: desc,
+          url,
+          type: "article",
+          images: [
+            {
+              url: story.coverUrl || "/images/demo/hero-featured.webp",
+              alt: title,
+            },
+          ],
+        },
+      };
+    }
+  }
+
   const title = `${story.title} - Đọc Truyện Tranh Online | ComicWeb`;
   const desc = story.description || `Đọc truyện ${story.title} tiếng Việt bản dịch đầy đủ, sắc nét, cập nhật nhanh nhất tại ComicWeb.`;
   const url = `${env.appUrl}/truyen/${story.slug}`;
@@ -253,6 +344,23 @@ export default async function storyPage({ params, searchParams }: StoryPageProps
   }
 
   const story = storyResponse.data;
+
+  // Check if we are reading a specific chapter
+  const chuongId = resolvedSearchParams["chuong-id"];
+  if (chuongId) {
+    const chapterSlug = chuongId.startsWith("chuong-") ? chuongId : `chuong-${chuongId}`;
+    const chapterResponse = await getCachedPublicChapter(storySlug, chapterSlug);
+    if (chapterResponse.success && chapterResponse.data) {
+      return (
+        <ChapterScreen
+          chapter={chapterResponse.data}
+          storySlug={storySlug}
+          storyTitle={story.title}
+          coverUrl={story.coverUrl || undefined}
+        />
+      );
+    }
+  }
 
   // Retrieve story chapters list
   const chaptersResponse = await getCachedChapters(
