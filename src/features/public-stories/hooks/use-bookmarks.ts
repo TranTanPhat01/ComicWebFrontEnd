@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { PublicStoryListItemDto } from "../types/public-story.types";
 
 const LOCAL_STORAGE_KEY = "comic_web_bookmarks";
 
-export function useBookmarks() {
+interface UseBookmarksOptions {
+  /** Optional toast callback: called when bookmark state changes */
+  onToast?: (message: string, variant: "success" | "info") => void;
+}
+
+export function useBookmarks(options?: UseBookmarksOptions) {
   const [bookmarks, setBookmarks] = useState<PublicStoryListItemDto[]>([]);
 
   // Function to load bookmarks from localStorage
-  const loadBookmarks = () => {
+  const loadBookmarks = useCallback(() => {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
@@ -20,56 +25,76 @@ export function useBookmarks() {
     } catch (e) {
       console.error("Error reading bookmarks from localStorage", e);
     }
-  };
+  }, []);
 
-  // Load on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadBookmarks();
 
     // Listen to updates from other tabs or components
-    const handleUpdate = () => {
-      loadBookmarks();
-    };
-
-    window.addEventListener("bookmarks-updated", handleUpdate);
+    window.addEventListener("bookmarks-updated", loadBookmarks);
     return () => {
-      window.removeEventListener("bookmarks-updated", handleUpdate);
+      window.removeEventListener("bookmarks-updated", loadBookmarks);
     };
-  }, []);
+  }, [loadBookmarks]);
 
-  const saveBookmarks = (newBookmarks: PublicStoryListItemDto[]) => {
-    setBookmarks(newBookmarks);
+  const addBookmark = useCallback((story: PublicStoryListItemDto) => {
+    setBookmarks((prev) => {
+      if (prev.some((b) => b.id === story.id)) return prev;
+      const next = [...prev, story];
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event("bookmarks-updated"));
+      } catch {}
+      options?.onToast?.(`Đã thêm "${story.title}" vào tủ truyện`, "success");
+      return next;
+    });
+  }, [options]);
+
+  const removeBookmark = useCallback((storyId: string | number) => {
+    setBookmarks((prev) => {
+      const target = prev.find((b) => b.id === storyId || String(b.id) === String(storyId));
+      const next = prev.filter((b) => b.id !== storyId && String(b.id) !== String(storyId));
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event("bookmarks-updated"));
+      } catch {}
+      if (target) {
+        options?.onToast?.(`Đã xóa "${target.title}" khỏi tủ truyện`, "info");
+      }
+      return next;
+    });
+  }, [options]);
+
+  const toggleBookmark = useCallback((story: PublicStoryListItemDto) => {
+    setBookmarks((prev) => {
+      const exists = prev.some((b) => b.id === story.id);
+      const next = exists ? prev.filter((b) => b.id !== story.id) : [...prev, story];
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event("bookmarks-updated"));
+      } catch {}
+      if (exists) {
+        options?.onToast?.(`Đã xóa "${story.title}" khỏi tủ truyện`, "info");
+      } else {
+        options?.onToast?.(`Đã thêm "${story.title}" vào tủ truyện`, "success");
+      }
+      return next;
+    });
+  }, [options]);
+
+  const isBookmarked = useCallback((storyId: string | number) => {
+    return bookmarks.some((b) => b.id === storyId || String(b.id) === String(storyId));
+  }, [bookmarks]);
+
+  const clearAll = useCallback(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newBookmarks));
-      // Dispatch event to sync immediately across components
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
       window.dispatchEvent(new Event("bookmarks-updated"));
-    } catch (e) {
-      console.error("Error saving bookmarks to localStorage", e);
-    }
-  };
-
-  const addBookmark = (story: PublicStoryListItemDto) => {
-    if (bookmarks.some((b) => b.id === story.id)) return;
-    const newBookmarks = [...bookmarks, story];
-    saveBookmarks(newBookmarks);
-  };
-
-  const removeBookmark = (storyId: string) => {
-    const newBookmarks = bookmarks.filter((b) => b.id !== storyId);
-    saveBookmarks(newBookmarks);
-  };
-
-  const toggleBookmark = (story: PublicStoryListItemDto) => {
-    if (bookmarks.some((b) => b.id === story.id)) {
-      removeBookmark(story.id);
-    } else {
-      addBookmark(story);
-    }
-  };
-
-  const isBookmarked = (storyId: string) => {
-    return bookmarks.some((b) => b.id === storyId);
-  };
+    } catch {}
+    setBookmarks([]);
+    options?.onToast?.("Đã xóa toàn bộ tủ truyện", "info");
+  }, [options]);
 
   return {
     bookmarks,
@@ -77,5 +102,6 @@ export function useBookmarks() {
     removeBookmark,
     toggleBookmark,
     isBookmarked,
+    clearAll,
   };
 }

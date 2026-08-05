@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
+import { translateText } from "@/lib/utils";
 import type { PublicStoryListItemDto } from "../types/public-story.types";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { useBookmarks } from "../hooks/use-bookmarks";
@@ -14,6 +15,20 @@ interface FeaturedStoryHeroProps {
 // Map slugs to genres to reproduce high fidelity visual mockups
 function getPlaceholderGenres(slug: string, status: string): string[] {
   const normalized = slug.toLowerCase();
+  
+  // Translate status to Vietnamese
+  let statusLabel = "Truyện Tranh";
+  const st = status.toLowerCase();
+  if (st === "published" || st === "ongoing") {
+    statusLabel = "Đang tiến hành";
+  } else if (st === "completed") {
+    statusLabel = "Hoàn thành";
+  } else if (st === "draft") {
+    statusLabel = "Bản nháp";
+  } else if (st === "hidden") {
+    statusLabel = "Tạm ẩn";
+  }
+
   if (normalized.includes("toan-chuc-phap-su")) {
     return ["Huyền Huyễn", "Đô Thị", "Phương Tây"];
   }
@@ -29,8 +44,10 @@ function getPlaceholderGenres(slug: string, status: string): string[] {
   if (normalized.includes("mot-minh-ta-dau")) {
     return ["Huyền Huyễn", "Hệ Thống", "Hành Động"];
   }
-  return [status, "Truyện Tranh"];
+  return [statusLabel, "Truyện Tranh"];
 }
+
+
 
 export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
   const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -132,7 +149,7 @@ export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
               }}
             >
               <ImageWithFallback
-                src={story.coverImageUrl}
+                src={story.coverUrl}
                 alt={story.title}
                 fill
                 priority={index === 0}
@@ -144,41 +161,59 @@ export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
           <div className="hero-slide__overlay" style={{ zIndex: 2 }} />
         </div>
 
-        {/* Content Box with key parameter to trigger animation reset on slide swap */}
-        <div key={activeIndex} className="hero-slide__content animate-hero-text" style={{ zIndex: 3 }}>
-          <span className="hero-slide__badge">TRUYỆN NỔI BẬT</span>
-          
-          <h2 className="hero-slide__title">
-            {currentStory.title}
-          </h2>
+        {/* Hero Inner Layout: text left + cover right */}
+        <div key={activeIndex} className="hero-slide__inner animate-hero-text" style={{ zIndex: 3 }}>
+          {/* Left: Content Box */}
+          <div className="hero-slide__content">
+            <span className="hero-slide__badge">TRUYỆN NỔI BẬT</span>
+            
+            <h2 className="hero-slide__title">
+              {translateText(currentStory.title)}
+            </h2>
 
-          <div className="hero-slide__tags" aria-label="Thể loại">
-            {genres.map((genre) => (
-              <span key={genre} className="hero-slide__tag">
-                {genre}
-              </span>
-            ))}
+            <div className="hero-slide__tags" aria-label="Thể loại">
+              {genres.map((genre) => (
+                <span key={genre} className="hero-slide__tag">
+                  {genre}
+                </span>
+              ))}
+            </div>
+
+            <p className="hero-slide__description">
+              {translateText(currentStory.description) || 
+                "Một thế giới đầy kịch tính đang chờ đợi bạn khám phá. Hãy theo dõi cuộc phiêu lưu đầy bất ngờ của nhân vật chính và những trận chiến huyền thoại."}
+            </p>
+
+            <div className="hero-slide__actions">
+              <Link
+                href={ROUTES.storyDetail(currentStory.slug)}
+                className="hero-slide__btn hero-slide__btn--primary"
+              >
+                Đọc ngay
+              </Link>
+              <button
+                type="button"
+                className={`hero-slide__btn hero-slide__btn--secondary ${followed ? "hero-slide__btn--followed" : ""}`}
+                onClick={() => toggleBookmark(currentStory)}
+              >
+                {followed ? "✓ Đã theo dõi" : "+ Theo dõi"}
+              </button>
+            </div>
           </div>
 
-          <p className="hero-slide__description">
-            {currentStory.description || 
-              "Một thế giới đầy kịch tính đang chờ đợi bạn khám phá. Hãy theo dõi cuộc phiêu lưu đầy bất ngờ của nhân vật chính và những trận chiến huyền thoại."}
-          </p>
-
-          <div className="hero-slide__actions">
-            <Link
-              href={ROUTES.storyDetail(currentStory.slug)}
-              className="hero-slide__btn hero-slide__btn--primary"
-            >
-              Đọc ngay
-            </Link>
-            <button
-              type="button"
-              className={`hero-slide__btn hero-slide__btn--secondary ${followed ? "hero-slide__btn--followed" : ""}`}
-              onClick={() => toggleBookmark(currentStory)}
-            >
-              {followed ? "✓ Đã theo dõi" : "+ Theo dõi"}
-            </button>
+          {/* Right: Prominent Cover Image */}
+          <div className="hero-slide__cover-showcase">
+            <div className="hero-slide__cover-frame">
+              <ImageWithFallback
+                src={currentStory.coverUrl}
+                alt={currentStory.title}
+                fill
+                priority
+                className="hero-slide__cover-img"
+                sizes="(max-width: 768px) 0px, 260px"
+              />
+              <div className="hero-slide__cover-glow" />
+            </div>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ interface ChapterReaderHeaderProps {
   storySlug: string;
   chapterTitle: string;
   chapterNumber: number;
-  publishedAt: string;
+  publishedAt: string | null;
 }
 
 export function ChapterReaderHeader({
@@ -17,11 +17,13 @@ export function ChapterReaderHeader({
   chapterNumber,
   publishedAt,
 }: ChapterReaderHeaderProps) {
-  const publishedDate = new Date(publishedAt).toLocaleDateString("vi-VN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const publishedDate = publishedAt
+    ? new Date(publishedAt).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Đang cập nhật";
 
   return (
     <header className="chapter-reader-header">

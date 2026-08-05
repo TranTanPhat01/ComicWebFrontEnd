@@ -4,10 +4,14 @@ import React from "react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
 import { useBookmarks } from "@/features/public-stories/hooks/use-bookmarks";
+import { useToast } from "@/providers/toast-provider";
 import { StoryGrid } from "@/features/public-stories/components/story-grid";
 
 export default function BookcasePage() {
-  const { bookmarks, removeBookmark } = useBookmarks();
+  const { toast } = useToast();
+  const { bookmarks, removeBookmark, clearAll } = useBookmarks({
+    onToast: (message, variant) => toast(message, variant),
+  });
 
   return (
     <div className="bookcase-page">
@@ -84,9 +88,8 @@ export default function BookcasePage() {
               <span>Đang theo dõi <strong>{bookmarks.length}</strong> bộ truyện</span>
               <button 
                 onClick={() => {
-                  if (window.confirm("Bạn có chắc muốn xóa toàn bộ danh sách theo dõi?")) {
-                    localStorage.removeItem("comic_web_bookmarks");
-                    window.dispatchEvent(new Event("bookmarks-updated"));
+                  if (window.confirm("Bạn có chắc muốn xóa toàn bộ danh sách theo dõi không?")) {
+                    clearAll();
                   }
                 }}
                 className="btn btn--ghost bookcase-list__clear-btn"

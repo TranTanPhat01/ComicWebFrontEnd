@@ -30,17 +30,32 @@ export const API_ROUTES = {
 
   // ── Admin Stories ─────────────────────────────────────────────────────────
   admin: {
+    stats: "/api/admin/stats",
     stories: {
       list: `${V1}/admin/stories`,
-      detail: (storyId: string) => `${V1}/admin/stories/${storyId}`,
+      detail: (storyId: string | number) => `${V1}/admin/stories/${storyId}`,
       create: `${V1}/admin/stories`,
-      update: (storyId: string) => `${V1}/admin/stories/${storyId}`,
-      delete: (storyId: string) => `${V1}/admin/stories/${storyId}`,
+      update: (storyId: string | number) => `${V1}/admin/stories/${storyId}`,
+      delete: (storyId: string | number) => `${V1}/admin/stories/${storyId}`,
+      schedule: (storyId: string | number) => `${V1}/admin/stories/${storyId}/schedule`,
+      restore: (storyId: string | number) => `${V1}/admin/stories/${storyId}/restore`,
+      publish: (storyId: string | number) => `${V1}/admin/stories/${storyId}/publish`,
+      unpublish: (storyId: string | number) => `${V1}/admin/stories/${storyId}/unpublish`,
+      hide: (storyId: string | number) => `${V1}/admin/stories/${storyId}/hide`,
+      complete: (storyId: string | number) => `${V1}/admin/stories/${storyId}/complete`,
     },
     chapters: {
-      list: (storyId: string) => `${V1}/admin/stories/${storyId}/chapters`,
-      detail: (storyId: string, chapterId: string) =>
+      list: (storyId: string | number) => `${V1}/admin/stories/${storyId}/chapters`,
+      detail: (storyId: string | number, chapterId: string | number) =>
         `${V1}/admin/stories/${storyId}/chapters/${chapterId}`,
+      restore: (storyId: string | number, chapterId: string | number) =>
+        `${V1}/admin/stories/${storyId}/chapters/${chapterId}/restore`,
+      publish: (chapterId: string | number) =>
+        `${V1}/admin/chapters/${chapterId}/publish`,
+      unpublish: (chapterId: string | number) =>
+        `${V1}/admin/chapters/${chapterId}/unpublish`,
+      hide: (chapterId: string | number) =>
+        `${V1}/admin/chapters/${chapterId}/hide`,
     },
     genres: {
       list: `${V1}/admin/genres`,

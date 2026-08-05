@@ -26,7 +26,7 @@ export function StoryDetailScreen({
   currentSort,
   now,
 }: StoryDetailScreenProps) {
-  const isFallbackMode = env.isDevelopment && story.id.startsWith("demo-story");
+  const isFallbackMode = env.isDevelopment && (typeof story.id === "string" ? (story.id as string).startsWith("demo-story") : story.id <= 7);
 
   // Extract chapters list and paginated metadata
   let chaptersList: PublicChapterListItemDto[] = [];
@@ -62,18 +62,18 @@ export function StoryDetailScreen({
 
   if (isFallbackMode) {
     firstChapterSlug = "chuong-1";
-    latestChapterSlug = `chuong-${story.totalChapters}`;
+    latestChapterSlug = `chuong-${totalChaptersCount}`;
   } else if (chaptersList.length > 0) {
     if (currentSort === "asc") {
       firstChapterSlug = chaptersList[0].slug;
-      if (story.totalChapters <= chaptersList.length) {
+      if (totalChaptersCount <= chaptersList.length) {
         latestChapterSlug = chaptersList[chaptersList.length - 1].slug;
       } else {
-        latestChapterSlug = `chuong-${story.totalChapters}`;
+        latestChapterSlug = `chuong-${totalChaptersCount}`;
       }
     } else {
       latestChapterSlug = chaptersList[0].slug;
-      if (story.totalChapters <= chaptersList.length) {
+      if (totalChaptersCount <= chaptersList.length) {
         firstChapterSlug = chaptersList[chaptersList.length - 1].slug;
       } else {
         firstChapterSlug = "chuong-1";

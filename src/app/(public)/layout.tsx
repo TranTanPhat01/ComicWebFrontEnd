@@ -1,9 +1,10 @@
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 /**
  * Public layout — wraps all public-facing routes.
- * Includes the site header and footer.
+ * Includes the site header, footer, and scroll-to-top button.
  */
 export default function PublicLayout({
   children,
@@ -15,6 +16,7 @@ export default function PublicLayout({
       <PublicHeader />
       <main className="public-layout__main">{children}</main>
       <PublicFooter />
+      <ScrollToTop />
     </div>
   );
 }

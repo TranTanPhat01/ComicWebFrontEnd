@@ -38,6 +38,7 @@ export function AdminGenresScreen() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadGenres();
   }, []);
 

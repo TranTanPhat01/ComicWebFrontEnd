@@ -45,10 +45,10 @@ const emptyDraft: ChapterFormDraft = {
 const STATUS_LABELS: Record<ChapterStatus, string> = {
   Draft: "Bản nháp",
   Published: "Đã đăng",
-  Archived: "Lưu trữ",
+  Hidden: "Tạm ẩn",
 };
 
-const STATUS_OPTIONS: ChapterStatus[] = ["Draft", "Published", "Archived"];
+const STATUS_OPTIONS: ChapterStatus[] = ["Draft", "Published", "Hidden"];
 
 const PAGE_SIZE = 20;
 
@@ -97,7 +97,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [originalStatus, setOriginalStatus] = useState<ChapterStatus | null>(null);
   const [draft, setDraft] = useState<ChapterFormDraft>(emptyDraft);
 
@@ -106,10 +106,10 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
     setLoading(true);
     setError(null);
     const response = await getAdminChaptersBrowser(storyId, {
-      pageNumber: page,
+      page: page,
       pageSize: PAGE_SIZE,
-      sortBy: "chapterNumber",
-      sortDirection: "desc",
+      sort: "chapterNumber",
+      desc: true,
     });
     if (response.success && response.data) {
       setChapters(extractList(response.data));
@@ -124,6 +124,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
   }, [storyId, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadChapters();
   }, [loadChapters]);
 
@@ -207,18 +208,17 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
 
     if (response.success && response.data) {
       const newChapter = response.data;
-      let currentVersion = newChapter.version;
-      const chapterIdStr = String(newChapter.id);
+      const currentVersion = newChapter.version;
 
       // Handle status workflow transition if it has changed
       if (editingId !== null && originalStatus !== null && originalStatus !== draft.status) {
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminChapter(chapterIdStr, currentVersion);
+          workflowRes = await publishAdminChapter(newChapter.id, currentVersion);
         } else if (draft.status === "Draft") {
-          workflowRes = await unpublishAdminChapter(chapterIdStr, currentVersion);
-        } else if (draft.status === "Archived") {
-          workflowRes = await hideAdminChapter(chapterIdStr, currentVersion);
+          workflowRes = await unpublishAdminChapter(newChapter.id, currentVersion);
+        } else if (draft.status === "Hidden") {
+          workflowRes = await hideAdminChapter(newChapter.id, currentVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -231,9 +231,9 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
         // Publish/Hide newly created chapter immediately
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminChapter(chapterIdStr, currentVersion);
-        } else if (draft.status === "Archived") {
-          workflowRes = await hideAdminChapter(chapterIdStr, currentVersion);
+          workflowRes = await publishAdminChapter(newChapter.id, currentVersion);
+        } else if (draft.status === "Hidden") {
+          workflowRes = await hideAdminChapter(newChapter.id, currentVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -450,7 +450,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
                       </span>
                     </td>
                     <td className="admin-table__td admin-table__td--muted">
-                      {formatDate(chapter.createdAt)}
+                      {formatDate(chapter.createAt)}
                     </td>
                     <td className="admin-table__td admin-table__td--right">
                       <div className="admin-table__actions">

@@ -6,11 +6,18 @@
 export const ROUTES = {
   // ── Public routes ─────────────────────────────────────────────────────────
   home: "/",
+  genres: "/tim-kiem",
+  newUpdates: "/moi-cap-nhat",
+  hot: "/hot",
+  completed: "/hoan-thanh",
+  search: "/tim-kiem",
+  bookcase: "/theo-doi",
   storyDetail: (storySlug: string) => `/truyen/${storySlug}`,
   chapterDetail: (storySlug: string, chapterSlug: string) =>
     `/truyen/${storySlug}/chuong/${chapterSlug}`,
 
   // ── Auth routes ───────────────────────────────────────────────────────────
+  login: "/login",
   adminLogin: "/admin/login",
 
   // ── Admin routes ──────────────────────────────────────────────────────────

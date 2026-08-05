@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { ChapterReaderHeader } from "./chapter-reader-header";
 import { ChapterNavigation } from "./chapter-navigation";
 import { ChapterContent } from "./chapter-content";
@@ -8,44 +8,37 @@ import { ReaderSettings } from "@/features/public-chapters/components/reader-set
 import { ChapterKeyboardNavigation } from "./chapter-keyboard-navigation";
 import { ReadingProgress } from "./reading-progress";
 import { BackToTopButton } from "./back-to-top-button";
+import { useReadingHistory } from "../hooks/use-reading-history";
 import type { PublicChapterDetailDto } from "../types/public-chapter.types";
 
 interface ChapterScreenProps {
   chapter: PublicChapterDetailDto;
   storySlug: string;
   storyTitle: string;
+  coverUrl?: string;
 }
 
 export function ChapterScreen({
   chapter,
   storySlug,
   storyTitle,
+  coverUrl,
 }: ChapterScreenProps) {
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [linkClicked, setLinkClicked] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  const { saveEntry } = useReadingHistory();
 
-  const handleShopeeClick = () => {
-    if (linkClicked) return;
-    setLinkClicked(true);
-    setCountdown(5);
+  // Save reading history when chapter mounts
+  useEffect(() => {
+    saveEntry({
+      storySlug,
+      storyTitle,
+      coverUrl,
+      chapterSlug: chapter.slug,
+      chapterNumber: chapter.number,
+      chapterTitle: chapter.title ?? undefined,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter.slug]);
 
-    // Open affiliate link in new tab
-    const url = chapter.affiliateLink || "https://shopee.vn";
-    window.open(url, "_blank", "noopener,noreferrer");
-
-    // Start countdown timer
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          setIsUnlocked(true);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
   return (
     <div id="chapter-reader-container" className="chapter-reader-screen reader-theme--dark reader-fit--width reader-spacing--none">
       {/* Scroll Reading Progress Indicator */}
@@ -54,8 +47,8 @@ export function ChapterScreen({
       {/* Keyboard shortcuts controller */}
       <ChapterKeyboardNavigation
         storySlug={storySlug}
-        previousSlug={chapter.previousChapterSlug}
-        nextSlug={chapter.nextChapterSlug}
+        previousSlug={chapter.previousChapter?.slug ?? null}
+        nextSlug={chapter.nextChapter?.slug ?? null}
       />
 
       {/* Floating Gear Settings Control panel */}
@@ -66,7 +59,7 @@ export function ChapterScreen({
         storyTitle={storyTitle}
         storySlug={storySlug}
         chapterTitle={chapter.title}
-        chapterNumber={chapter.chapterNumber}
+        chapterNumber={chapter.number}
         publishedAt={chapter.publishedAt}
       />
 
@@ -74,100 +67,108 @@ export function ChapterScreen({
         {/* Top Navigation */}
         <ChapterNavigation
           storySlug={storySlug}
-          previousSlug={chapter.previousChapterSlug}
-          nextSlug={chapter.nextChapterSlug}
+          previousSlug={chapter.previousChapter?.slug ?? null}
+          nextSlug={chapter.nextChapter?.slug ?? null}
           position="top"
         />
 
         {/* Main Text Content Article */}
-        <div className="chapter-reader-screen__content-wrapper" style={{ position: "relative", minHeight: chapter.isLocked && !isUnlocked ? "400px" : "auto" }}>
-          {chapter.isLocked && !isUnlocked ? (
-            <div className="shopee-lock-panel" style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              padding: "3rem 2rem",
-              background: "rgba(15, 23, 42, 0.45)",
-              backdropFilter: "blur(12px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "var(--radius-2xl)",
-              maxWidth: "600px",
-              margin: "2rem auto",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
-            }}>
-              <div className="shopee-lock-panel__icon" style={{
-                fontSize: "3.5rem",
-                marginBottom: "1.5rem",
-                filter: "drop-shadow(0 0 12px rgba(249, 78, 47, 0.3))"
-              }}>
-                🔒
-              </div>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "white", marginBottom: "1rem" }}>
-                Chương Này Đang Tạm Khóa
-              </h2>
-              <p style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: "420px", marginBottom: "2rem" }}>
-                Ủng hộ chúng tôi bằng cách bấm vào liên kết Shopee tài trợ bên dưới để mở khóa đọc toàn bộ chương miễn phí.
-              </p>
-
-              <button
-                onClick={handleShopeeClick}
-                disabled={linkClicked}
+        <div className="chapter-reader-screen__content-wrapper">
+          {chapter.isLocked ? (
+            <div
+              className="chapter-lock-card"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                padding: "4rem 2rem",
+                margin: "3rem auto",
+                maxWidth: "640px",
+                backgroundColor: "rgba(30, 41, 59, 0.7)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                borderRadius: "var(--radius-lg)",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
+                backdropFilter: "blur(12px)",
+                color: "#f8fafc",
+              }}
+            >
+              <div
+                className="chapter-lock-card__icon"
                 style={{
-                  padding: "1rem 2rem",
-                  fontSize: "1rem",
-                  fontWeight: 700,
-                  color: "white",
-                  background: linkClicked ? "var(--color-navy-muted)" : "linear-gradient(135deg, #f94e2f, #ff6600)",
-                  border: "none",
-                  borderRadius: "var(--radius-full)",
-                  cursor: linkClicked ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  boxShadow: linkClicked ? "none" : "0 10px 20px rgba(249, 78, 47, 0.25)",
-                  transition: "all var(--transition-fast)"
+                  fontSize: "4.5rem",
+                  marginBottom: "1.5rem",
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ width: "20px", height: "20px" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                {linkClicked ? "Đang mở khóa..." : "BẤM VÀO ĐÂY ĐỂ MỞ KHÓA"}
-              </button>
-
-              {countdown !== null && (
-                <div style={{ marginTop: "1.5rem", fontSize: "0.9rem", color: "#f94e2f", fontWeight: "bold" }}>
-                  Đang kiểm tra click... Mở khóa sau {countdown} giây
-                </div>
+                🔒
+              </div>
+              <h2
+                className="chapter-lock-card__title"
+                style={{
+                  fontSize: "1.8rem",
+                  fontWeight: "bold",
+                  marginBottom: "1rem",
+                  color: "#f8fafc",
+                }}
+              >
+                Chương Này Đang Được Khóa Bản Quyền
+              </h2>
+              <p
+                className="chapter-lock-card__text"
+                style={{
+                  fontSize: "1.05rem",
+                  lineHeight: "1.6",
+                  color: "#cbd5e1",
+                  marginBottom: "2.5rem",
+                  maxWidth: "500px",
+                }}
+              >
+                Để tiếp tục đọc chương truyện này và ủng hộ tác giả, vui lòng bấm vào nút bên dưới để đặt mua sách giấy chính hãng trên sàn Shopee.
+              </p>
+              {chapter.affiliateLink && (
+                <a
+                  href={chapter.affiliateLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn--primary btn--large"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    padding: "1rem 2.5rem",
+                    fontSize: "1.15rem",
+                    fontWeight: "bold",
+                    borderRadius: "9999px",
+                    backgroundColor: "#f97316", // Shopee Orange
+                    color: "#ffffff",
+                    textDecoration: "none",
+                    boxShadow: "0 4px 14px 0 rgba(249, 115, 22, 0.4)",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px 0 rgba(249, 115, 22, 0.6)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 14px 0 rgba(249, 115, 22, 0.4)";
+                  }}
+                >
+                  Mua Sách Ủng Hộ Tác Giả & Mở Khóa Trên Shopee 🛒
+                </a>
               )}
             </div>
           ) : (
-            <>
-              {chapter.isLocked && isUnlocked && (
-                <div style={{
-                  padding: "1.5rem",
-                  border: "1px dashed var(--color-success)",
-                  borderRadius: "var(--radius-xl)",
-                  backgroundColor: "rgba(16, 185, 129, 0.08)",
-                  textAlign: "center",
-                  marginBottom: "2rem",
-                  animation: "revealFadeIn 500ms ease"
-                }}>
-                  <span style={{ fontSize: "1.2rem", fontWeight: "bold", color: "var(--color-success)" }}>🎉 Mở Khóa Thành Công!</span>
-                  <p style={{ color: "var(--color-text-secondary)", fontSize: "0.875rem", marginTop: "0.35rem" }}>Cảm ơn bạn đã click link Shopee ủng hộ dịch giả. Dưới đây là nội dung chương truyện:</p>
-                </div>
-              )}
-              <ChapterContent content={chapter.isLocked ? `<p style="text-align:center; font-style:italic;">[Nội dung giả lập của chương ${chapter.chapterNumber}: "${chapter.title}" đã được mở khóa trực quan và hiển thị thành công. Dữ liệu thực tế được quản lý trực tiếp từ backend C# thông qua trường AffiliateLink.]</p><p style="margin-top: 1.5rem;">Cảm ơn bạn đã theo dõi truyện trên website ComicWeb của chúng tôi. Hãy bookmark và chia sẻ truyện để nhận các bản dịch nhanh nhất!</p>` : chapter.content} />
-            </>
+            <ChapterContent content={chapter.content} />
           )}
         </div>
 
         {/* Bottom Navigation */}
         <ChapterNavigation
           storySlug={storySlug}
-          previousSlug={chapter.previousChapterSlug}
-          nextSlug={chapter.nextChapterSlug}
+          previousSlug={chapter.previousChapter?.slug ?? null}
+          nextSlug={chapter.nextChapter?.slug ?? null}
           position="bottom"
         />
       </div>

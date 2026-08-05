@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { translateText } from "@/lib/utils";
 
 interface StoryDescriptionProps {
   description: string | null;
@@ -9,7 +10,9 @@ interface StoryDescriptionProps {
 export function StoryDescription({ description }: StoryDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  if (!description) {
+  const translatedDescription = translateText(description);
+
+  if (!translatedDescription) {
     return (
       <div className="story-description">
         <h2 className="story-description__title">NỘI DUNG</h2>
@@ -21,7 +24,7 @@ export function StoryDescription({ description }: StoryDescriptionProps) {
   }
 
   // Split description by newlines to render nice paragraphs
-  const paragraphs = description.split("\n").filter(p => p.trim() !== "");
+  const paragraphs = translatedDescription.split("\n").filter(p => p.trim() !== "");
 
   return (
     <div className="story-description">

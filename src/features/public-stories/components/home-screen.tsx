@@ -13,6 +13,7 @@ import { CompletedStoriesSection } from "./completed-stories-section";
 import { NewsletterForm } from "./newsletter-form";
 import { env } from "@/lib/env";
 import { DEMO_STORIES } from "../demo/demo-stories";
+import { parsePaginatedEnvelope } from "@/lib/api/parse-envelope";
 import type { GenreOptionDto, PublicStoryListItemDto } from "../types/public-story.types";
 
 interface HomeScreenProps {
@@ -55,15 +56,15 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
 
   // Fetch stories matching page, search, genre parameters
   let response = await getPublicStories({
-    pageNumber: page,
+    page: page,
     pageSize: pageSize,
-    search: search || undefined,
+    query: search || undefined,
     genre: genre || undefined,
   });
 
   // Fetch a base list of stories for hero and sidebar
   const baseResponse = await getPublicStories({
-    pageNumber: 1,
+    page: 1,
     pageSize: 20,
   });
 
@@ -76,53 +77,34 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
   let genres: GenreOptionDto[] = [];
 
   if (response.success && response.data) {
-    const rawData = response.data as unknown;
-    if (rawData && typeof rawData === "object") {
-      // 1. Backend contract: {"data": [...], "meta": {...}}
-      if ("data" in rawData && Array.isArray((rawData as { data: unknown }).data)) {
-        const payload = rawData as { data: unknown[]; meta?: { page?: number; pageSize?: number; totalItems?: number; totalPages?: number } };
-        storiesList = payload.data as PublicStoryListItemDto[];
-        totalPages = payload.meta?.totalPages || 1;
-        totalCount = payload.meta?.totalItems || storiesList.length;
-      }
-      // 2. Frontend contract: {"items": [...], ...}
-      else if ("items" in rawData) {
-        const paginated = rawData as { items: unknown[]; totalPages?: number; totalCount?: number };
-        if (Array.isArray(paginated.items)) {
-          storiesList = paginated.items as PublicStoryListItemDto[];
-          totalPages = paginated.totalPages || 1;
-          totalCount = paginated.totalCount || storiesList.length;
-        }
-      }
-    } else if (Array.isArray(rawData)) {
-      storiesList = rawData as PublicStoryListItemDto[];
-      totalPages = 1;
-      totalCount = storiesList.length;
-    }
+    const parsed = parsePaginatedEnvelope<PublicStoryListItemDto>(response.data);
+    storiesList = parsed.items;
+    totalPages = parsed.totalPages;
+    totalCount = parsed.totalCount;
   }
 
   if (genresResponse.success && genresResponse.data) {
-    genres = Array.isArray(genresResponse.data)
+    const rawGenres = Array.isArray(genresResponse.data)
       ? genresResponse.data as GenreOptionDto[]
       : (genresResponse.data as { data?: GenreOptionDto[] }).data ?? [];
+
+    const seen = new Set<string>();
+    genres = [];
+    rawGenres.forEach((g) => {
+      const normalizedName = g.name.normalize("NFC");
+      if (!seen.has(normalizedName)) {
+        seen.add(normalizedName);
+        genres.push({
+          ...g,
+          name: normalizedName,
+        });
+      }
+    });
   }
 
   let baseStories: PublicStoryListItemDto[] = [];
   if (baseResponse.success && baseResponse.data) {
-    const rawData = baseResponse.data as unknown;
-    if (rawData && typeof rawData === "object") {
-      if ("data" in rawData && Array.isArray((rawData as { data: unknown }).data)) {
-        const payload = rawData as { data: unknown[] };
-        baseStories = payload.data as PublicStoryListItemDto[];
-      } else if ("items" in rawData) {
-        const paginated = rawData as { items: unknown[] };
-        if (Array.isArray(paginated.items)) {
-          baseStories = paginated.items as PublicStoryListItemDto[];
-        }
-      }
-    } else if (Array.isArray(rawData)) {
-      baseStories = rawData as PublicStoryListItemDto[];
-    }
+    baseStories = parsePaginatedEnvelope<PublicStoryListItemDto>(baseResponse.data).items;
   }
 
   let isFallbackMode = false;
@@ -150,7 +132,7 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
     }
 
     // Sort by views / status / chapters for mock realism
-    filteredDemo.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    filteredDemo.sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
 
     // Paginate
     totalCount = filteredDemo.length;

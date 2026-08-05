@@ -87,16 +87,14 @@ const getCachedPublicStoryBySlug = cache(async (slug: string): Promise<ApiRespon
         id: demo.id,
         title: demo.title,
         slug: demo.slug,
-        coverImageUrl: demo.coverImageUrl,
+        coverUrl: demo.coverUrl,
         description: demo.description,
         authorName: demo.authorName,
-        artistName: null,
         status: demo.status,
         genres: getStoryGenres(demo.slug, demo.status),
-        totalChapters: demo.totalChapters,
-        viewCount: demo.viewCount,
-        createdAt: demo.updatedAt,
+        publishedAt: demo.publishedAt,
         updatedAt: demo.updatedAt,
+        chapters: [], // Mock chapters list, populated via getCachedChapters separate call in FE
       };
       return {
         success: true,
@@ -153,10 +151,10 @@ async function getCachedChapters(
     const mockChapters: PublicChapterListItemDto[] = [];
     for (let i = 1; i <= totalChapters; i++) {
       mockChapters.push({
-        id: `mock-chapter-${storySlug}-${i}`,
+        id: i,
         title: getChapterMockTitle(storySlug, i),
         slug: `chuong-${i}`,
-        chapterNumber: i,
+        number: i,
         publishedAt: new Date(Date.now() - (totalChapters - i) * 12 * 3600 * 1000).toISOString(),
       });
     }
@@ -219,7 +217,7 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
       type: "article",
       images: [
         {
-          url: story.coverImageUrl || "/images/demo/hero-featured.webp",
+          url: story.coverUrl || "/images/demo/hero-featured.webp",
           alt: story.title,
         },
       ],
@@ -248,7 +246,7 @@ export default async function storyPage({ params, searchParams }: StoryPageProps
   // Retrieve story chapters list
   const chaptersResponse = await getCachedChapters(
     storySlug,
-    story.totalChapters,
+    story.chapters?.length ?? 0,
     page,
     pageSize,
     sort

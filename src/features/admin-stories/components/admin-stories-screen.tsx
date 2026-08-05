@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import Link from "next/link";
-import { ROUTES } from "@/constants/routes";
+
 import {
   createAdminStory,
   deleteAdminStory,
@@ -29,7 +29,6 @@ interface StoryFormDraft {
   description: string;
   coverImageUrl: string;
   authorName: string;
-  artistName: string;
   status: AdminStoryStatus;
   genres: string;
   version: number;
@@ -41,7 +40,6 @@ const emptyDraft: StoryFormDraft = {
   description: "",
   coverImageUrl: "",
   authorName: "",
-  artistName: "",
   status: "Draft",
   genres: "",
   version: 0,
@@ -113,7 +111,7 @@ export function AdminStoriesScreen() {
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [originalStatus, setOriginalStatus] = useState<AdminStoryStatus | null>(null);
   const [draft, setDraft] = useState<StoryFormDraft>(emptyDraft);
 
@@ -122,7 +120,7 @@ export function AdminStoriesScreen() {
     setLoading(true);
     setError(null);
     const response = await getAdminStoriesBrowser({
-      pageNumber: page,
+      page: page,
       pageSize: PAGE_SIZE,
       search: search || undefined,
       status: filterStatus || undefined,
@@ -140,6 +138,7 @@ export function AdminStoriesScreen() {
   }, [page, search, filterStatus]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadStories();
   }, [loadStories]);
 
@@ -181,7 +180,6 @@ export function AdminStoriesScreen() {
       description: "",
       coverImageUrl: story.coverImageUrl ?? "",
       authorName: "",
-      artistName: "",
       status: story.status,
       genres: "",
       version: story.version,
@@ -199,7 +197,6 @@ export function AdminStoriesScreen() {
         description: detail.description ?? "",
         coverImageUrl: detail.coverImageUrl ?? "",
         authorName: detail.authorName ?? "",
-        artistName: detail.artistName ?? "",
         status: detail.status,
         genres: detail.genres ? detail.genres.join(", ") : "",
         version: detail.version,
@@ -240,16 +237,15 @@ export function AdminStoriesScreen() {
           slug: draft.slug.trim() || undefined,
           description: draft.description.trim(),
           authorName: draft.authorName.trim() || undefined,
-          artistName: draft.artistName.trim() || undefined,
           coverImageUrl: draft.coverImageUrl.trim() || undefined,
           genres: genresArray.length > 0 ? genresArray : undefined,
         } satisfies CreateStoryRequestDto)
       : await updateAdminStory(editingId, {
+          id: editingId,
           title: draft.title.trim(),
           slug: draft.slug.trim() || undefined,
           description: draft.description.trim(),
           authorName: draft.authorName.trim() || undefined,
-          artistName: draft.artistName.trim() || undefined,
           coverImageUrl: draft.coverImageUrl.trim() || undefined,
           genres: genresArray.length > 0 ? genresArray : undefined,
           version: draft.version,
@@ -257,7 +253,7 @@ export function AdminStoriesScreen() {
 
     if (response.success && response.data) {
       const newStory = response.data;
-      let currentVersion = newStory.version;
+      const currentVersion = newStory.version;
       const storyIdStr = String(newStory.id);
 
       // Handle status workflow transition if it has changed
@@ -377,15 +373,7 @@ export function AdminStoriesScreen() {
                   />
                 </label>
 
-                <label className="admin-form__field">
-                  <span>Họa sĩ</span>
-                  <input
-                    className="input"
-                    value={draft.artistName}
-                    onChange={(e) => setDraft((d) => ({ ...d, artistName: e.target.value }))}
-                    placeholder="Tên họa sĩ"
-                  />
-                </label>
+
 
                 <label className="admin-form__field admin-form__field--full">
                   <span>URL Ảnh bìa</span>
@@ -570,17 +558,17 @@ export function AdminStoriesScreen() {
 
                     {/* Chapters */}
                     <td className="admin-table__td admin-table__td--center admin-table__td--mono">
-                      {story.totalChapters}
+                      {story.totalChapters ?? "—"}
                     </td>
 
                     {/* Views */}
                     <td className="admin-table__td admin-table__td--center admin-table__td--mono">
-                      {formatNumber(story.viewCount)}
+                      {story.viewCount !== undefined ? formatNumber(story.viewCount) : "—"}
                     </td>
 
                     {/* Date */}
                     <td className="admin-table__td admin-table__td--muted">
-                      {formatDate(story.updatedAt)}
+                      {formatDate(story.updateAt || story.createAt)}
                     </td>
 
                     {/* Actions */}

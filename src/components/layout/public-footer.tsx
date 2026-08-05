@@ -39,11 +39,20 @@ export function PublicFooter() {
               <Link href={ROUTES.home} className="public-footer__link">
                 Trang chủ
               </Link>
-              <Link href={`${ROUTES.home}?genre=Tất cả`} className="public-footer__link">
+              <Link href={ROUTES.genres} className="public-footer__link">
                 Thể loại
               </Link>
-              <Link href={ROUTES.home} className="public-footer__link">
+              <Link href={ROUTES.newUpdates} className="public-footer__link">
                 Mới cập nhật
+              </Link>
+              <Link href={ROUTES.hot} className="public-footer__link">
+                Truyện Hot
+              </Link>
+              <Link href={ROUTES.completed} className="public-footer__link">
+                Hoàn thành
+              </Link>
+              <Link href={ROUTES.search} className="public-footer__link">
+                Tìm kiếm
               </Link>
             </nav>
           </div>
@@ -69,7 +78,7 @@ export function PublicFooter() {
 
       <div className="public-footer__bottom container">
         <p className="public-footer__copyright">
-          &copy; {new Date().getFullYear()} {siteConfig.name}. Thiết kế giao diện hiện đại & cao cấp. All rights reserved.
+          &copy; {new Date().getFullYear()} {siteConfig.name}. Thiết kế giao diện hiện đại & cao cấp. Mọi quyền được bảo lưu.
         </p>
       </div>
     </footer>

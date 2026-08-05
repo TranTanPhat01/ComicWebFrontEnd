@@ -86,7 +86,7 @@ export async function refreshSession(): Promise<string | null> {
     });
 
     return refreshData.accessToken;
-  } catch (error) {
+  } catch {
     await clearAuthCookies();
     return null;
   }

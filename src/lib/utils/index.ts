@@ -71,3 +71,59 @@ export function timeAgo(dateString: string): string {
 
   return "vừa xong";
 }
+
+/**
+ * Translates English text from database seeds to Vietnamese.
+ */
+export function translateText(text: string | null | undefined): string {
+  if (!text) return "";
+  const t = text.trim();
+
+  // Mappings for unaccented titles from database
+  const titleMap: Record<string, string> = {
+    "Bat Dau Nhan Duoc Hang Ty Thuoc Tinh": "Bắt Đầu Nhận Được Hàng Tỷ Thuộc Tính",
+    "He Thong Y Khoa Than Ky": "Hệ Thống Y Khoa Thần Kỳ",
+    "Cuu Thien Kiem Ton": "Cửu Thiên Kiếm Tôn",
+    "Do Thi Cam Huong": "Đô Thị Cảm Hướng",
+    "Toan Chuc Phap Su": "Toàn Chức Pháp Sư",
+    "Dau Pha Thuong Khung": "Đấu Phá Thương Khung",
+    "Than An Vuong Toa": "Thần Ấn Vương Tọa",
+    "Vo Luyen Dinh Phong": "Võ Luyện Đỉnh Phong",
+    "Mot Minh Ta Dau": "Một Mình Ta Đấu",
+  };
+
+  if (titleMap[t]) return titleMap[t];
+
+  // Mappings for English descriptions from database
+  const descMap: Record<string, string> = {
+    "System level up story where MC gains billions of attribute points.": 
+      "Truyện thăng cấp hệ thống cực kỳ lôi cuốn, kể về hành trình nhân vật chính nhận được hàng tỷ thuộc tính sức mạnh vượt trội.",
+    "A story about a young doctor who gains an amazing medical system.": 
+      "Câu chuyện về một bác sĩ trẻ tuổi sở hữu hệ thống y tế thần kỳ, cứu sống hàng ngàn sinh mạng.",
+    "Traditional martial arts sword cultivator striving for immortality.": 
+      "Truyện tu tiên kiếm sĩ võ thuật truyền thống phấn đấu vì sự trường sinh bất tử.",
+    "Urban billionaire romance and modern family struggle story.": 
+      "Câu chuyện tình yêu của tỷ phú đô thị và cuộc chiến gia tộc hiện đại đầy kịch tính.",
+    "A beautiful fantasy adventure story set in an ancient fantasy world.": 
+      "Câu chuyện phiêu lưu kỳ ảo tuyệt đẹp lấy bối cảnh trong thế giới cổ đại huyền bí.",
+  };
+
+  if (descMap[t]) return descMap[t];
+
+  // Keyword fallbacks
+  const lower = t.toLowerCase();
+  if (lower.startsWith("system level up story")) {
+    return "Truyện thăng cấp hệ thống cực kỳ lôi cuốn, kể về hành trình nhân vật chính nhận được hàng tỷ thuộc tính sức mạnh vượt trội.";
+  }
+  if (lower.includes("traditional martial arts sword cultivator")) {
+    return "Truyện tu tiên kiếm sĩ võ thuật truyền thống phấn đấu vì sự trường sinh bất tử.";
+  }
+  if (lower.includes("urban billionaire romance")) {
+    return "Câu chuyện tình yêu của tỷ phú đô thị và cuộc chiến gia tộc hiện đại đầy kịch tính.";
+  }
+  if (lower.includes("beautiful fantasy adventure story")) {
+    return "Câu chuyện phiêu lưu kỳ ảo tuyệt đẹp lấy bối cảnh trong thế giới cổ đại huyền bí.";
+  }
+
+  return t;
+}

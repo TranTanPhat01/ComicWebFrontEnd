@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAuditLogsBrowser } from "../api/audit-logs-browser.api";
-import type { AuditLogListItemDto, AuditAction, GetAuditLogsParams } from "../types/audit-log.types";
+import type { AuditLogListItemDto, GetAuditLogsParams } from "../types/audit-log.types";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function extractList(data: unknown): AuditLogListItemDto[] {
@@ -41,11 +41,21 @@ function formatDateTime(dateStr: string) {
   });
 }
 
-const ACTION_LABELS: Record<AuditAction, string> = {
-  Create: "Tạo mới",
-  Update: "Cập nhật",
-  Delete: "Xóa",
-};
+function getActionLabel(action: string): string {
+  const norm = action.toUpperCase();
+  if (norm.includes("CREATE")) return "Tạo mới";
+  if (norm.includes("UPDATE")) return "Cập nhật";
+  if (norm.includes("DELETE") || norm.includes("REMOVE")) return "Xóa";
+  return action;
+}
+
+function getActionBadgeClass(action: string): string {
+  const norm = action.toUpperCase();
+  if (norm.includes("CREATE")) return "status-badge--audit-create";
+  if (norm.includes("UPDATE")) return "status-badge--audit-update";
+  if (norm.includes("DELETE") || norm.includes("REMOVE")) return "status-badge--audit-delete";
+  return "status-badge--audit-info";
+}
 
 const PAGE_SIZE = 20;
 
@@ -60,7 +70,7 @@ export function AuditLogsScreen() {
 
   // Filters
   const [filterEntity, setFilterEntity] = useState("");
-  const [filterAction, setFilterAction] = useState<AuditAction | "">("");
+  const [filterAction, setFilterAction] = useState<string>("");
   const [filterUser, setFilterUser] = useState("");
   const [filterEntityInput, setFilterEntityInput] = useState("");
   const [filterUserInput, setFilterUserInput] = useState("");
@@ -69,11 +79,11 @@ export function AuditLogsScreen() {
     setLoading(true);
     setError(null);
     const params: GetAuditLogsParams = {
-      pageNumber: page,
+      page: page,
       pageSize: PAGE_SIZE,
-      entityName: filterEntity || undefined,
+      entityType: filterEntity || undefined,
       action: filterAction || undefined,
-      performedBy: filterUser || undefined,
+      actorUserId: filterUser ? Number(filterUser) || undefined : undefined,
     };
     const response = await getAuditLogsBrowser(params);
     if (response.success && response.data) {
@@ -92,6 +102,7 @@ export function AuditLogsScreen() {
   }, [page, filterEntity, filterAction, filterUser]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadLogs();
   }, [loadLogs]);
 
@@ -116,7 +127,7 @@ export function AuditLogsScreen() {
   return (
     <div className="admin-auditlogs">
       <PageHeader
-        title="Audit Logs"
+        title="Nhật ký thao tác"
         description="Lịch sử thao tác trong hệ thống"
       />
 
@@ -129,19 +140,19 @@ export function AuditLogsScreen() {
         <div className="stats-card">
           <div className="stats-card__label">Tạo mới</div>
           <div className="stats-card__value" style={{ color: "#22c55e" }}>
-            {logs.filter((l) => l.action === "Create").length}
+            {logs.filter((l) => l.action.toUpperCase().includes("CREATE")).length}
           </div>
         </div>
         <div className="stats-card">
           <div className="stats-card__label">Cập nhật</div>
           <div className="stats-card__value" style={{ color: "#f59e0b" }}>
-            {logs.filter((l) => l.action === "Update").length}
+            {logs.filter((l) => l.action.toUpperCase().includes("UPDATE")).length}
           </div>
         </div>
         <div className="stats-card">
           <div className="stats-card__label">Xóa</div>
           <div className="stats-card__value" style={{ color: "#ef4444" }}>
-            {logs.filter((l) => l.action === "Delete").length}
+            {logs.filter((l) => l.action.toUpperCase().includes("DELETE") || l.action.toUpperCase().includes("REMOVE")).length}
           </div>
         </div>
       </div>
@@ -153,13 +164,13 @@ export function AuditLogsScreen() {
             className="input"
             value={filterEntityInput}
             onChange={(e) => setFilterEntityInput(e.target.value)}
-            placeholder="Lọc theo entity (e.g. Story, Chapter)..."
+            placeholder="Lọc theo đối tượng (ví dụ: Story, Chapter)..."
           />
           <input
             className="input"
             value={filterUserInput}
             onChange={(e) => setFilterUserInput(e.target.value)}
-            placeholder="Lọc theo người thực hiện..."
+            placeholder="Lọc theo ID người thực hiện (số)..."
           />
           <button className="btn btn--secondary" type="submit">Áp dụng</button>
           {hasFilters && (
@@ -176,16 +187,19 @@ export function AuditLogsScreen() {
             className={`admin-filter-btn ${filterAction === "" ? "admin-filter-btn--active" : ""}`}
             onClick={() => { setFilterAction(""); setPage(1); }}
           >Tất cả</button>
-          {(["Create", "Update", "Delete"] as AuditAction[]).map((a) => (
-            <button
-              key={a}
-              type="button"
-              className={`admin-filter-btn admin-filter-btn--audit-${a.toLowerCase()} ${filterAction === a ? "admin-filter-btn--active" : ""}`}
-              onClick={() => { setFilterAction(a); setPage(1); }}
-            >
-              {ACTION_LABELS[a]}
-            </button>
-          ))}
+          {["Create", "Update", "Delete"].map((a) => {
+            const labels: Record<string, string> = { Create: "Tạo mới", Update: "Cập nhật", Delete: "Xóa" };
+            return (
+              <button
+                key={a}
+                type="button"
+                className={`admin-filter-btn admin-filter-btn--audit-${a.toLowerCase()} ${filterAction === a ? "admin-filter-btn--active" : ""}`}
+                onClick={() => { setFilterAction(a); setPage(1); }}
+              >
+                {labels[a]}
+              </button>
+            );
+          })}
         </div>
       </form>
 
@@ -196,7 +210,7 @@ export function AuditLogsScreen() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th className="admin-table__th">Entity</th>
+              <th className="admin-table__th">Đối tượng</th>
               <th className="admin-table__th admin-table__th--center">Hành động</th>
               <th className="admin-table__th">Người thực hiện</th>
               <th className="admin-table__th">Thời gian</th>
@@ -221,27 +235,31 @@ export function AuditLogsScreen() {
                 <tr key={log.id} className="admin-table__row">
                   <td className="admin-table__td">
                     <div className="admin-table__story-info">
-                      <span className="admin-table__story-title">{log.entityName}</span>
+                      <span className="admin-table__story-title">{log.entityType}</span>
                       {log.entityId && (
                         <span className="admin-table__story-slug">ID: {log.entityId}</span>
                       )}
                     </div>
                   </td>
                   <td className="admin-table__td admin-table__td--center">
-                    <span className={`status-badge status-badge--audit-${log.action.toLowerCase()}`}>
-                      {ACTION_LABELS[log.action]}
+                    <span className={`status-badge ${getActionBadgeClass(log.action)}`}>
+                      {getActionLabel(log.action)}
                     </span>
                   </td>
                   <td className="admin-table__td admin-table__td--muted">
-                    {log.performedBy}
+                    {log.actorUsername || (log.actorUserId ? `User ID: ${log.actorUserId}` : "Hệ thống")}
                   </td>
                   <td className="admin-table__td admin-table__td--muted">
-                    {formatDateTime(log.performedAt)}
+                    {formatDateTime(log.occurredAt)}
                   </td>
                   <td className="admin-table__td">
-                    {log.changes ? (
-                      <span className="admin-auditlogs__changes" title={log.changes}>
-                        {log.changes.length > 60 ? log.changes.slice(0, 60) + "..." : log.changes}
+                    {log.detailsJson || log.errorCode ? (
+                      <span className="admin-auditlogs__changes" title={log.detailsJson || log.errorCode || ""}>
+                        {log.detailsJson
+                          ? log.detailsJson.length > 60
+                            ? log.detailsJson.slice(0, 60) + "..."
+                            : log.detailsJson
+                          : `Lỗi: ${log.errorCode}`}
                       </span>
                     ) : (
                       <span style={{ color: "var(--color-text-muted)" }}>—</span>

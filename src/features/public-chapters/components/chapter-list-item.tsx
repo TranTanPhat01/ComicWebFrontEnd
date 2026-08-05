@@ -9,16 +9,18 @@ interface ChapterListItemProps {
 }
 
 export function ChapterListItem({ chapter, storySlug, now }: ChapterListItemProps) {
-  const publishedDate = new Date(chapter.publishedAt);
-  const diffTime = now - publishedDate.getTime();
+  const publishedDate = chapter.publishedAt ? new Date(chapter.publishedAt) : null;
+  const diffTime = publishedDate ? now - publishedDate.getTime() : Infinity;
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
   const isNew = diffDays >= 0 && diffDays <= 3;
 
-  const formattedDate = publishedDate.toLocaleDateString("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const formattedDate = publishedDate
+    ? publishedDate.toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+    : "Đang cập nhật";
 
   return (
     <div className="chapter-list-item">
@@ -28,7 +30,7 @@ export function ChapterListItem({ chapter, storySlug, now }: ChapterListItemProp
       >
         <div className="chapter-list-item__left">
           <span className="chapter-list-item__number">
-            Chương {chapter.chapterNumber}
+            Chương {chapter.number}
           </span>
           <span className="chapter-list-item__title" title={chapter.title}>
             {chapter.title ? `- ${chapter.title}` : ""}

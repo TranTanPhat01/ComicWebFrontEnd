@@ -13,6 +13,9 @@ export function ImageWithFallback({
   alt,
   fallbackText,
   className,
+  fill,
+  priority,
+  sizes,
   ...props
 }: ImageWithFallbackProps) {
   const [error, setError] = useState(false);
@@ -27,17 +30,27 @@ export function ImageWithFallback({
       .toUpperCase();
   };
 
-  const hasImage = src && !error;
+  const sanitizedSrc = src
+    ? src.replace(/^https?:\/\/localhost:\d+/, "").replace(/^https?:\/\/127\.0\.0\.1:\d+/, "")
+    : src;
+
+  const hasImage = sanitizedSrc && !error;
+
+  console.log("ImageWithFallback Render:", { src, sanitizedSrc, hasImage, error });
 
   return (
     <div className="image-container-wrapper">
       {hasImage ? (
-        <Image
-          src={src}
+        <img
+          src={sanitizedSrc!}
           alt={alt}
-          onError={() => setError(true)}
+          onError={(e) => {
+            console.error("ImageWithFallback Error loading src:", sanitizedSrc, "Event:", e);
+            setError(true);
+          }}
           className={className}
-          {...props}
+          style={fill ? { position: "absolute", height: "100%", width: "100%", left: 0, top: 0, right: 0, bottom: 0, objectFit: "cover" } : undefined}
+          {...(props as Record<string, unknown>)}
         />
       ) : (
         <div className="image-fallback-placeholder">

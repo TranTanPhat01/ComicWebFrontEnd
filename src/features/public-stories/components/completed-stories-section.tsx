@@ -6,8 +6,11 @@ import { StoryGrid } from "./story-grid";
 import { env } from "@/lib/env";
 import { DEMO_STORIES } from "../demo/demo-stories";
 
+import { parsePaginatedEnvelope } from "@/lib/api/parse-envelope";
+import type { PublicStoryListItemDto } from "../types/public-story.types";
+
 export async function CompletedStoriesSection() {
-  let completedStories: typeof DEMO_STORIES = [];
+  let completedStories: PublicStoryListItemDto[] = [];
 
   const response = await getPublicStories({
     status: "Completed",
@@ -17,28 +20,11 @@ export async function CompletedStoriesSection() {
   let hasData = false;
 
   if (response.success && response.data) {
-    const rawData = response.data as unknown;
-    if (rawData && typeof rawData === "object") {
-      if ("data" in rawData && Array.isArray((rawData as { data: unknown }).data)) {
-        const payload = rawData as { data: unknown[] };
-        completedStories = payload.data as typeof DEMO_STORIES;
-      } else if ("items" in rawData) {
-        const paginated = rawData as { items: unknown[] };
-        if (Array.isArray(paginated.items)) {
-          completedStories = paginated.items as typeof DEMO_STORIES;
-        }
-      }
-    } else if (Array.isArray(rawData)) {
-      completedStories = rawData as typeof DEMO_STORIES;
-    }
+    const items = parsePaginatedEnvelope<PublicStoryListItemDto>(response.data).items;
+    completedStories = items.filter((s) => s.status === "Completed");
 
     if (completedStories.length > 0) {
       hasData = true;
-      // In case backend status filter is not working/supported yet:
-      const hasCompleted = completedStories.some(s => s.status === "Completed");
-      if (!hasCompleted) {
-        completedStories = completedStories.filter((s) => s.status === "Completed");
-      }
     }
   }
 
@@ -74,7 +60,7 @@ export async function CompletedStoriesSection() {
           </svg>
           TRUYỆN HOÀN THÀNH
         </h2>
-        <Link href={ROUTES.home} className="section-header__link">
+        <Link href={ROUTES.completed} className="section-header__link">
           Xem tất cả &rsaquo;
         </Link>
       </div>

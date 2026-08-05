@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
-import { getAdminStoriesBrowser } from "../api/admin-stories-browser.api";
-import type { AdminStoryListItemDto } from "../types/admin-story.types";
+import { getAdminStoriesBrowser, getAdminStatsBrowser } from "../api/admin-stories-browser.api";
+import type { AdminStoryListItemDto, AdminStatsDto } from "../types/admin-story.types";
 
 function formatNumber(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n);
@@ -22,27 +22,32 @@ function formatDate(dateStr: string) {
 // ── Component ──────────────────────────────────────────────────────────────────
 export function AdminDashboardScreen() {
   const [stories, setStories] = useState<AdminStoryListItemDto[]>([]);
-  const [totalItems, setTotalItems] = useState(0);
+  const [stats, setStats] = useState<AdminStatsDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
-      const res = await getAdminStoriesBrowser({ pageNumber: 1, pageSize: 10 });
+      const [res, statsRes] = await Promise.all([
+        
+        getAdminStoriesBrowser({ page: 1, pageSize: 10 }),
+        getAdminStatsBrowser(),
+      ]);
+
       if (res.success && res.data) {
         const raw = res.data as unknown;
         let list: AdminStoryListItemDto[] = [];
-        let total = 0;
         if (raw && typeof raw === "object") {
           if ("data" in raw && Array.isArray((raw as { data: unknown }).data)) {
-            list = (raw as { data: AdminStoryListItemDto[]; meta?: { totalItems?: number } }).data;
-            total = (raw as { meta?: { totalItems?: number } }).meta?.totalItems ?? list.length;
+            list = (raw as { data: AdminStoryListItemDto[] }).data;
           } else if ("items" in raw && Array.isArray((raw as { items: unknown }).items)) {
-            list = (raw as { items: AdminStoryListItemDto[]; totalCount?: number }).items;
-            total = (raw as { totalCount?: number }).totalCount ?? list.length;
+            list = (raw as { items: AdminStoryListItemDto[] }).items;
           }
         }
         setStories(list);
-        setTotalItems(total);
+      }
+
+      if (statsRes.success && statsRes.data) {
+        setStats(statsRes.data);
       }
       setLoading(false);
     })();
@@ -50,13 +55,12 @@ export function AdminDashboardScreen() {
 
   const ongoing = stories.filter((s) => s.status === "Published").length;
   const completed = stories.filter((s) => s.status === "Completed").length;
-  const totalChapters = stories.reduce((sum, s) => sum + s.totalChapters, 0);
-  const totalViews = stories.reduce((sum, s) => sum + s.viewCount, 0);
+  const totalItems = stories.length;
 
   return (
     <div className="admin-dashboard">
       <PageHeader
-        title="Dashboard"
+        title="Trang quản trị"
         description="Tổng quan hệ thống ComicWeb"
       />
 
@@ -65,29 +69,31 @@ export function AdminDashboardScreen() {
         <div className="stats-card stats-card--accent-primary">
           <div className="stats-card__icon">📚</div>
           <div className="stats-card__label">Tổng truyện</div>
-          <div className="stats-card__value">{loading ? "—" : formatNumber(totalItems)}</div>
+          <div className="stats-card__value">{loading ? "—" : formatNumber(stats?.totalStories ?? 0)}</div>
           <div className="stats-card__sub">trong hệ thống</div>
         </div>
 
         <div className="stats-card stats-card--accent-green">
           <div className="stats-card__icon">🔥</div>
-          <div className="stats-card__label">Đang tiến hành</div>
-          <div className="stats-card__value stats-card__value--ongoing">{loading ? "—" : ongoing}</div>
+          <div className="stats-card__label">Đang phát hành</div>
+          <div className="stats-card__value stats-card__value--ongoing">
+            {loading ? "—" : formatNumber(stats?.ongoingStories ?? 0)}
+          </div>
           <div className="stats-card__sub">truyện đang update</div>
         </div>
 
         <div className="stats-card stats-card--accent-blue">
           <div className="stats-card__icon">📖</div>
           <div className="stats-card__label">Tổng chương</div>
-          <div className="stats-card__value">{loading ? "—" : formatNumber(totalChapters)}</div>
+          <div className="stats-card__value">{loading ? "—" : formatNumber(stats?.totalChapters ?? 0)}</div>
           <div className="stats-card__sub">chương đã đăng</div>
         </div>
 
         <div className="stats-card stats-card--accent-orange">
-          <div className="stats-card__icon">👁️</div>
-          <div className="stats-card__label">Lượt xem</div>
-          <div className="stats-card__value">{loading ? "—" : formatNumber(totalViews)}</div>
-          <div className="stats-card__sub">tổng lượt đọc</div>
+          <div className="stats-card__icon">🔒</div>
+          <div className="stats-card__label">Khóa Shopee</div>
+          <div className="stats-card__value">{loading ? "—" : formatNumber(stats?.lockedChapters ?? 0)}</div>
+          <div className="stats-card__sub">chương có link mua sách</div>
         </div>
       </div>
 
@@ -107,7 +113,7 @@ export function AdminDashboardScreen() {
           </Link>
           <Link href={ROUTES.adminAuditLogs} className="admin-quicklink-card">
             <span className="admin-quicklink-card__icon">📋</span>
-            <span className="admin-quicklink-card__label">Audit Logs</span>
+            <span className="admin-quicklink-card__label">Nhật ký thao tác</span>
             <span className="admin-quicklink-card__arrow">→</span>
           </Link>
           <Link href="/" target="_blank" className="admin-quicklink-card">
@@ -160,13 +166,13 @@ export function AdminDashboardScreen() {
                       </span>
                     </td>
                     <td className="admin-table__td admin-table__td--center admin-table__td--mono">
-                      {story.totalChapters}
+                      {story.totalChapters ?? "—"}
                     </td>
                     <td className="admin-table__td admin-table__td--center admin-table__td--mono">
-                      {formatNumber(story.viewCount)}
+                      {story.viewCount !== undefined ? formatNumber(story.viewCount) : "—"}
                     </td>
                     <td className="admin-table__td admin-table__td--muted">
-                      {formatDate(story.updatedAt)}
+                      {formatDate(story.updateAt || story.createAt)}
                     </td>
                   </tr>
                 ))}

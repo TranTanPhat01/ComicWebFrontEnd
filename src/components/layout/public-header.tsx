@@ -2,13 +2,92 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { siteConfig } from "@/config/site";
 import { useBookmarks } from "@/features/public-stories/hooks/use-bookmarks";
-import { getPublicStoriesBrowser } from "@/features/public-stories/api/public-stories-browser.api";
+import { getPublicStoriesBrowser, getGenresBrowser } from "@/features/public-stories/api/public-stories-browser.api";
 import type { PublicStoryListItemDto } from "@/features/public-stories/types/public-story.types";
 import { DEMO_STORIES } from "@/features/public-stories/demo/demo-stories";
+import { useTheme } from "@/providers/theme-provider";
+
+// ─── NavLinks sub-component ────────────────────────────────────────────────
+// Separated so usePathname can be consumed in a dedicated component.
+function NavLinks({ bookmarkCount, genres = [] }: { bookmarkCount: number; genres: string[] }) {
+  const pathname = usePathname();
+
+  // Determine which nav item is active based on current pathname
+  const isHome = pathname === "/";
+  const isGenre = pathname.startsWith("/the-loai");
+  const isNewUpdates = pathname.startsWith("/moi-cap-nhat");
+  const isHot = pathname.startsWith("/hot");
+  const isCompleted = pathname.startsWith("/hoan-thanh");
+  const isBookcase = pathname.startsWith("/theo-doi");
+
+  const displayGenres = genres.length > 0 ? genres : ["Huyền Huyễn", "Đô Thị", "Hệ Thống", "Xuyên Không", "Tiên Hiệp", "Khoa Huyễn", "Đấu Khí", "Đấu Trí", "Lịch Sử", "Ngôn Tình", "Kinh Dị", "Hài Hước"];
+
+  return (
+    <nav className="public-header__nav" aria-label="Điều hướng chính">
+      <Link
+        href={ROUTES.home}
+        className={`public-header__nav-link${isHome ? " public-header__nav-link--active" : ""}`}
+      >
+        Trang chủ
+      </Link>
+      
+      <div className="public-header__nav-item--has-dropdown">
+        <Link
+          href={ROUTES.genres}
+          className={`public-header__nav-link${isGenre ? " public-header__nav-link--active" : ""}`}
+          style={{ display: "flex", alignItems: "center" }}
+        >
+          Thể loại
+          <svg className="public-header__dropdown-caret" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </Link>
+        
+        {/* Hover Dropdown Mega Menu */}
+        <div className="public-header__genres-dropdown">
+          {displayGenres.map((gName) => (
+            <Link
+              key={gName}
+              href={`${ROUTES.search}?genre=${encodeURIComponent(gName)}`}
+              className="public-header__genres-dropdown-item"
+            >
+              <span>{gName}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <Link
+        href={ROUTES.newUpdates}
+        className={`public-header__nav-link${isNewUpdates ? " public-header__nav-link--active" : ""}`}
+      >
+        Mới cập nhật
+      </Link>
+      <Link
+        href={ROUTES.hot}
+        className={`public-header__nav-link${isHot ? " public-header__nav-link--active" : ""}`}
+      >
+        Hot
+      </Link>
+      <Link
+        href={ROUTES.completed}
+        className={`public-header__nav-link${isCompleted ? " public-header__nav-link--active" : ""}`}
+      >
+        Hoàn thành
+      </Link>
+      <Link
+        href={ROUTES.bookcase}
+        className={`public-header__nav-link public-header__nav-link--bookcase${isBookcase ? " public-header__nav-link--active" : ""}`}
+      >
+        Tủ truyện {bookmarkCount > 0 && <span className="public-header__badge">{bookmarkCount}</span>}
+      </Link>
+    </nav>
+  );
+}
 
 export function PublicHeader() {
   const router = useRouter();
@@ -23,7 +102,27 @@ export function PublicHeader() {
   const [suggestions, setSuggestions] = useState<PublicStoryListItemDto[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Genres state
+  const [genres, setGenres] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function loadGenres() {
+      try {
+        const response = await getGenresBrowser();
+        if (response.success && response.data) {
+          const list = Array.isArray(response.data)
+            ? response.data.map((g) => g.name)
+            : [];
+          setGenres(list);
+        }
+      } catch (err) {
+        console.error("Failed to load genres for dropdown", err);
+      }
+    }
+    loadGenres();
+  }, []);
+
   const searchContainerRef = React.useRef<HTMLFormElement>(null);
   const mobileSearchContainerRef = React.useRef<HTMLFormElement>(null);
 
@@ -50,12 +149,13 @@ export function PublicHeader() {
   useEffect(() => {
     const q = searchQuery.trim();
     if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
-    setSearchLoading(true);
+
     const delayDebounceFn = setTimeout(async () => {
       try {
         const response = await getPublicStoriesBrowser({
@@ -92,8 +192,6 @@ export function PublicHeader() {
         setActiveIndex(-1);
       } catch (err) {
         console.error("Search suggestion error", err);
-      } finally {
-        setSearchLoading(false);
       }
     }, 300);
 
@@ -125,8 +223,8 @@ export function PublicHeader() {
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true); // default to dark for mockup aesthetics
   const [isScrolled, setIsScrolled] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -152,8 +250,7 @@ export function PublicHeader() {
   };
 
   const handleThemeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    alert("Đang đổi chế độ màu (Tính năng Demo)");
+    toggleTheme();
   };
 
   return (
@@ -192,26 +289,7 @@ export function PublicHeader() {
         </div>
 
         {/* Center Navigation Links (Hidden on Mobile) */}
-        <nav className="public-header__nav" aria-label="Điều hướng chính">
-          <Link href={ROUTES.home} className="public-header__nav-link public-header__nav-link--active">
-            Trang chủ
-          </Link>
-          <Link href={`${ROUTES.home}?genre=Tất cả`} className="public-header__nav-link">
-            Thể loại
-          </Link>
-          <Link href={ROUTES.home} className="public-header__nav-link">
-            Mới cập nhật
-          </Link>
-          <Link href={ROUTES.home} className="public-header__nav-link">
-            Hot
-          </Link>
-          <Link href={`${ROUTES.home}?status=Completed`} className="public-header__nav-link">
-            Hoàn thành
-          </Link>
-          <Link href="/theo-doi" className="public-header__nav-link public-header__nav-link--bookcase">
-            Tủ truyện {bookmarks.length > 0 && <span className="public-header__badge">{bookmarks.length}</span>}
-          </Link>
-        </nav>
+        <NavLinks bookmarkCount={bookmarks.length} genres={genres} />
 
         {/* Right Search & Utilities Area */}
         <div className="public-header__right">
@@ -246,10 +324,10 @@ export function PublicHeader() {
                       setSearchQuery(story.title);
                     }}
                   >
-                    {story.coverImageUrl ? (
+                    {story.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={story.coverImageUrl}
+                        src={story.coverUrl}
                         alt={story.title}
                         className="suggestion-item__cover"
                       />
@@ -259,7 +337,7 @@ export function PublicHeader() {
                     <div className="suggestion-item__info">
                       <span className="suggestion-item__title">{story.title}</span>
                       <span className="suggestion-item__meta">
-                        {story.authorName || "Đang cập nhật"} · {story.totalChapters} chương
+                        {story.authorName || "Đang cập nhật"} · {story.chapterCount ?? 0} chương
                       </span>
                     </div>
                   </Link>
@@ -273,9 +351,10 @@ export function PublicHeader() {
             type="button"
             onClick={handleThemeToggle}
             className="public-header__util-btn"
-            aria-label="Đổi theme"
+            aria-label={isDark ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+            title={isDark ? "Chế độ sáng" : "Chế độ tối"}
           >
-            {isDarkMode ? (
+            {isDark ? (
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707" />
               </svg>
@@ -287,16 +366,16 @@ export function PublicHeader() {
           </button>
 
           {/* Profile Button */}
-          <button
-            type="button"
-            onClick={() => alert("Chức năng tài khoản đang được phát triển (Demo)")}
+          <Link
+            href={ROUTES.login}
             className="public-header__profile-btn"
             aria-label="Tài khoản"
+            title="Đăng nhập / Đăng ký"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -333,10 +412,10 @@ export function PublicHeader() {
                       setMobileMenuOpen(false);
                     }}
                   >
-                    {story.coverImageUrl ? (
+                    {story.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={story.coverImageUrl}
+                        src={story.coverUrl}
                         alt={story.title}
                         className="suggestion-item__cover"
                       />
@@ -346,7 +425,7 @@ export function PublicHeader() {
                     <div className="suggestion-item__info">
                       <span className="suggestion-item__title">{story.title}</span>
                       <span className="suggestion-item__meta">
-                        {story.authorName || "Đang cập nhật"} · {story.totalChapters} chương
+                        {story.authorName || "Đang cập nhật"} · {story.chapterCount ?? 0} chương
                       </span>
                     </div>
                   </Link>
@@ -364,39 +443,54 @@ export function PublicHeader() {
               Trang chủ
             </Link>
             <Link
-              href={`${ROUTES.home}?genre=Tất cả`}
+              href={ROUTES.genres}
               className="public-header__mobile-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Thể loại
             </Link>
             <Link
-              href={ROUTES.home}
+              href={ROUTES.newUpdates}
               className="public-header__mobile-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Mới cập nhật
             </Link>
             <Link
-              href={ROUTES.home}
+              href={ROUTES.hot}
               className="public-header__mobile-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Hot
             </Link>
             <Link
-              href={`${ROUTES.home}?status=Completed`}
+              href={ROUTES.completed}
               className="public-header__mobile-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Hoàn thành
             </Link>
             <Link
-              href="/theo-doi"
+              href={ROUTES.bookcase}
               className="public-header__mobile-link"
               onClick={() => setMobileMenuOpen(false)}
             >
               Tủ truyện {bookmarks.length > 0 && `(${bookmarks.length})`}
+            </Link>
+            <Link
+              href={ROUTES.search}
+              className="public-header__mobile-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              🔍 Tìm kiếm nâng cao
+            </Link>
+            <Link
+              href={ROUTES.login}
+              className="public-header__mobile-link"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{ borderTop: "1px dashed var(--color-border)", marginTop: "var(--space-2)", paddingTop: "var(--space-2)" }}
+            >
+              👤 Đăng nhập / Đăng ký
             </Link>
           </nav>
         </div>

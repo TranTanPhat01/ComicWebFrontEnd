@@ -7,6 +7,7 @@ import type { PaginatedResponse } from "@/types/pagination";
 import type {
   PublicStoryListItemDto,
   GetStoriesParams,
+  GenreOptionDto,
 } from "../types/public-story.types";
 
 /**
@@ -16,4 +17,8 @@ export async function getPublicStoriesBrowser(
   params?: GetStoriesParams
 ): Promise<ApiResponse<PaginatedResponse<PublicStoryListItemDto>>> {
   return browserGet(API_ROUTES.public.stories.list, params);
+}
+
+export async function getGenresBrowser(): Promise<ApiResponse<GenreOptionDto[]>> {
+  return browserGet(API_ROUTES.public.stories.genres);
 }

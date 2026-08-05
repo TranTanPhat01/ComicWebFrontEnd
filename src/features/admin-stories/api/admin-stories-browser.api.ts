@@ -15,6 +15,7 @@ import type {
   AdminGetStoriesParams,
   CreateStoryRequestDto,
   UpdateStoryRequestDto,
+  AdminStatsDto,
 } from "../types/admin-story.types";
 
 /**
@@ -30,7 +31,7 @@ export async function getAdminStoriesBrowser(
  * Fetches a single story by ID for edit form. Browser-side.
  */
 export async function getAdminStoryByIdBrowser(
-  storyId: string
+  storyId: string | number
 ): Promise<ApiResponse<AdminStoryDetailDto>> {
   return browserGet(API_ROUTES.admin.stories.detail(storyId));
 }
@@ -48,7 +49,7 @@ export async function createAdminStory(
  * Updates an existing story. Browser-side.
  */
 export async function updateAdminStory(
-  storyId: string,
+  storyId: string | number,
   payload: UpdateStoryRequestDto
 ): Promise<ApiResponse<AdminStoryDetailDto>> {
   return browserPut(API_ROUTES.admin.stories.update(storyId), payload);
@@ -58,7 +59,7 @@ export async function updateAdminStory(
  * Deletes a story. Browser-side.
  */
 export async function deleteAdminStory(
-  storyId: string,
+  storyId: string | number,
   version: number
 ): Promise<ApiResponse<void>> {
   return browserDelete(`${API_ROUTES.admin.stories.delete(storyId)}?version=${version}`);
@@ -68,38 +69,66 @@ export async function deleteAdminStory(
  * Publishes a story. Browser-side.
  */
 export async function publishAdminStory(
-  storyId: string,
+  storyId: string | number,
   version: number
-): Promise<ApiResponse<any>> {
-  return browserPost(`${API_ROUTES.admin.stories.list}/${storyId}/publish`, { version });
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(API_ROUTES.admin.stories.publish(storyId), { version });
 }
 
 /**
  * Unpublishes a story (back to Draft). Browser-side.
  */
 export async function unpublishAdminStory(
-  storyId: string,
+  storyId: string | number,
   version: number
-): Promise<ApiResponse<any>> {
-  return browserPost(`${API_ROUTES.admin.stories.list}/${storyId}/unpublish`, { version });
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(API_ROUTES.admin.stories.unpublish(storyId), { version });
 }
 
 /**
  * Hides a story. Browser-side.
  */
 export async function hideAdminStory(
-  storyId: string,
+  storyId: string | number,
   version: number
-): Promise<ApiResponse<any>> {
-  return browserPost(`${API_ROUTES.admin.stories.list}/${storyId}/hide`, { version });
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(API_ROUTES.admin.stories.hide(storyId), { version });
 }
 
 /**
  * Completes a story. Browser-side.
  */
 export async function completeAdminStory(
-  storyId: string,
+  storyId: string | number,
   version: number
-): Promise<ApiResponse<any>> {
-  return browserPost(`${API_ROUTES.admin.stories.list}/${storyId}/complete`, { version });
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(API_ROUTES.admin.stories.complete(storyId), { version });
+}
+
+/**
+ * Schedules a story to be published at a specific time. Browser-side.
+ */
+export async function scheduleAdminStory(
+  storyId: string | number,
+  scheduledAt: string,
+  version: number
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(API_ROUTES.admin.stories.schedule(storyId), { scheduledAt, version });
+}
+
+/**
+ * Restores a soft-deleted story. Browser-side.
+ */
+export async function restoreAdminStory(
+  storyId: string | number,
+  version: number
+): Promise<ApiResponse<AdminStoryDetailDto>> {
+  return browserPost(`${API_ROUTES.admin.stories.restore(storyId)}?version=${version}`);
+}
+
+/**
+ * Fetches dashboard statistics. Browser-side.
+ */
+export async function getAdminStatsBrowser(): Promise<ApiResponse<AdminStatsDto>> {
+  return browserGet(API_ROUTES.admin.stats);
 }

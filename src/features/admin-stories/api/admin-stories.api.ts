@@ -24,7 +24,7 @@ export async function getAdminStories(
  * Server Component usage only.
  */
 export async function getAdminStoryById(
-  storyId: string,
+  storyId: string | number,
   accessToken?: string
 ): Promise<ApiResponse<AdminStoryDetailDto>> {
   return serverGet(API_ROUTES.admin.stories.detail(storyId), undefined, {

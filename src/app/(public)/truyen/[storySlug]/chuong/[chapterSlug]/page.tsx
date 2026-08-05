@@ -84,20 +84,23 @@ const getCachedPublicChapter = cache(async (
       const parts = chapterSlug.split("-");
       const num = Number(parts[parts.length - 1]) || 1;
 
-      const previousChapterSlug = num > 1 ? `chuong-${num - 1}` : null;
-      const nextChapterSlug = num < demoStory.totalChapters ? `chuong-${num + 1}` : null;
+      const previousChapter = num > 1 ? { slug: `chuong-${num - 1}`, number: num - 1, title: getChapterMockTitle(storySlug, num - 1) } : null;
+      const nextChapter = num < demoStory.chapterCount ? { slug: `chuong-${num + 1}`, number: num + 1, title: getChapterMockTitle(storySlug, num + 1) } : null;
 
       const detail: PublicChapterDetailDto = {
-        id: `mock-chapter-${storySlug}-${num}`,
-        title: getChapterMockTitle(storySlug, num),
+        id: num,
+        story: {
+          id: demoStory.id,
+          slug: demoStory.slug,
+          title: demoStory.title,
+        },
         slug: chapterSlug,
-        chapterNumber: num,
+        number: num,
+        title: getChapterMockTitle(storySlug, num),
         content: getChapterMockContent(storySlug, demoStory.title, num),
-        publishedAt: new Date(Date.now() - (demoStory.totalChapters - num) * 12 * 3600 * 1000).toISOString(),
-        isLocked: false,
-        affiliateLink: null,
-        previousChapterSlug,
-        nextChapterSlug,
+        publishedAt: new Date(Date.now() - (demoStory.chapterCount - num) * 12 * 3600 * 1000).toISOString(),
+        previousChapter,
+        nextChapter,
       };
 
       return {
@@ -148,8 +151,8 @@ export async function generateMetadata({ params }: ChapterPageProps): Promise<Me
 
   const chapter = chapterRes.data;
   const storyTitle = storyRes.success ? storyRes.data.title : "Truyện";
-  const title = `Chương ${chapter.chapterNumber}${chapter.title ? `: ${chapter.title}` : ""} - ${storyTitle} | ComicWeb`;
-  const desc = `Đọc chương ${chapter.chapterNumber} truyện ${storyTitle} online bản dịch chất lượng cao, cập nhật nhanh nhất tại ComicWeb.`;
+  const title = `Chương ${chapter.number}${chapter.title ? `: ${chapter.title}` : ""} - ${storyTitle} | ComicWeb`;
+  const desc = `Đọc chương ${chapter.number} truyện ${storyTitle} online bản dịch chất lượng cao, cập nhật nhanh nhất tại ComicWeb.`;
   const url = `${env.appUrl}/truyen/${storySlug}/chuong/${chapter.slug}`;
 
   return {

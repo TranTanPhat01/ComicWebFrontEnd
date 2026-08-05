@@ -28,20 +28,10 @@ function getPlaceholderGenres(slug: string): string[] {
   return ["Hành Động", "Kịch Tính"];
 }
 
-function formatViews(views: number): string {
-  if (views >= 1000000) {
-    return (views / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-  }
-  if (views >= 1000) {
-    return (views / 1000).toFixed(0) + "K";
-  }
-  return String(views);
-}
-
 export function TopReadStories({ stories }: TopReadStoriesProps) {
-  // Sort stories by viewCount desc, take top 5
+  // Sort stories by chapterCount desc, take top 5
   const topStories = [...stories]
-    .sort((a, b) => b.viewCount - a.viewCount)
+    .sort((a, b) => b.chapterCount - a.chapterCount)
     .slice(0, 5);
 
   if (topStories.length === 0) {
@@ -71,7 +61,7 @@ export function TopReadStories({ stories }: TopReadStoriesProps) {
               <Link href={ROUTES.storyDetail(story.slug)} className="top-read-item__cover-link">
                 <div className="top-read-item__cover-wrapper">
                   <ImageWithFallback
-                    src={story.coverImageUrl}
+                    src={story.coverUrl}
                     alt={story.title}
                     fill
                     sizes="80px"
@@ -94,10 +84,7 @@ export function TopReadStories({ stories }: TopReadStoriesProps) {
                 </div>
                 <div className="top-read-item__meta">
                   <span className="top-read-item__chapter">
-                    Ch. {story.totalChapters}
-                  </span>
-                  <span className="top-read-item__views" title={`${story.viewCount} lượt xem`}>
-                    🔥 {formatViews(story.viewCount)}
+                    Ch. {story.chapterCount}
                   </span>
                 </div>
               </div>

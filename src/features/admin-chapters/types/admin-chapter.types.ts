@@ -4,60 +4,67 @@
  */
 
 export interface AdminChapterListItemDto {
-  id: string;
+  id: number;
+  storyId: number;
+  chapterNumber: number;
   title: string;
   slug: string;
-  chapterNumber: number;
   status: ChapterStatus;
   version: number;
   publishedAt: string | null;
-  createdAt: string;
+  deletedAt: string | null;
+  createAt: string;
+  updateAt: string | null;
   isLocked: boolean;
   affiliateLink: string | null;
 }
 
 export interface AdminChapterDetailDto {
-  id: string;
+  id: number;
+  storyId: number;
+  chapterNumber: number;
   title: string;
   slug: string;
-  chapterNumber: number;
   content: string;
   status: ChapterStatus;
   version: number;
   publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  deletedAt: string | null;
+  createAt: string;
+  updateAt: string | null;
   isLocked: boolean;
   affiliateLink: string | null;
 }
 
-export type ChapterStatus = "Draft" | "Published" | "Archived";
+export type ChapterStatus = "Draft" | "Published" | "Hidden";
 
 export interface CreateChapterRequestDto {
-  title: string;
   chapterNumber: number;
+  title: string;
+  slug?: string;
   content: string;
-  status?: ChapterStatus;
   isLocked?: boolean;
   affiliateLink?: string | null;
 }
 
 export interface UpdateChapterRequestDto {
-  title?: string;
-  chapterNumber?: number;
-  content?: string;
-  status?: ChapterStatus;
-  version?: number;
+  chapterNumber: number;
+  title: string;
+  slug?: string;
+  content: string;
+  version: number;
   isLocked?: boolean;
   affiliateLink?: string | null;
 }
 
 export interface GetAdminChaptersParams {
-  pageNumber?: number;
+  page?: number;
   pageSize?: number;
-  status?: ChapterStatus;
-  sortBy?: string;
-  sortDirection?: "asc" | "desc";
+  search?: string;
+  status?: string;
+  includeDeleted?: boolean;
+  sort?: string;
+  desc?: boolean;
   /** Index signature for QueryParams compatibility */
   [key: string]: string | number | boolean | undefined | null;
 }

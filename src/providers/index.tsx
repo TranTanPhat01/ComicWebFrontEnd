@@ -1,10 +1,19 @@
 "use client";
 
+import React from "react";
+import { ThemeProvider } from "./theme-provider";
+import { ToastProvider } from "./toast-provider";
+
 /**
  * Root provider wrapper.
- * Add context providers here as the app grows (e.g., React Query, Theme).
- * Keep this thin — no business logic.
+ * Wraps all client-side context providers: Theme, Toast.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </ThemeProvider>
+  );
 }
