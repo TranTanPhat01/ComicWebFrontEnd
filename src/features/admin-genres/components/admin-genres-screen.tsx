@@ -29,10 +29,18 @@ export function AdminGenresScreen() {
     setLoading(true);
     setError(null);
     const response = await getAdminGenres();
-    if (response.success) {
-      setGenres(response.data ?? []);
+    if (response.success && response.data) {
+      const raw = response.data as unknown;
+      if (raw && typeof raw === "object" && "data" in raw && Array.isArray((raw as { data: unknown }).data)) {
+        setGenres((raw as { data: AdminGenreDto[] }).data);
+      } else if (Array.isArray(raw)) {
+        setGenres(raw as AdminGenreDto[]);
+      } else {
+        setGenres([]);
+      }
     } else {
-      setError(response.error.message || "Không thể tải danh sách thể loại.");
+      setError(response.success ? "Không có dữ liệu." : (response as { success: false; error: { message: string } }).error?.message ?? "Không thể tải danh sách thể loại.");
+      setGenres([]);
     }
     setLoading(false);
   };
