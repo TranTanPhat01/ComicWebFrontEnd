@@ -28,15 +28,6 @@ export function middleware(request: NextRequest) {
     if (hasSession && mustChangePassword && !isChangePasswordRoute) {
       return NextResponse.redirect(new URL("/admin/change-password", request.url));
     }
-
-    // 3. Logged in and accessing /admin/login -> Redirect to dashboard or change password
-    if (hasSession && isAuthRoute) {
-      if (mustChangePassword) {
-        return NextResponse.redirect(new URL("/admin/change-password", request.url));
-      } else {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-    }
   }
 
   return NextResponse.next();
