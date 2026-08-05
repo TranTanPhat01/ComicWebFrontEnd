@@ -34,6 +34,13 @@ export interface BrowserRequestOptions {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
+function getBaseUrl(path: string): string {
+  if (path.startsWith("/api/admin") || path.startsWith("/api/v1/admin")) {
+    return "";
+  }
+  return API_BASE_URL;
+}
+
 /**
  * Performs a GET request from the browser.
  */
@@ -42,7 +49,7 @@ export async function browserGet<T>(
   params?: QueryParams,
   options: BrowserRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${buildUrl(path, params)}`;
+  const url = `${getBaseUrl(path)}${buildUrl(path, params)}`;
   return browserFetch<T>("GET", url, undefined, options);
 }
 
@@ -54,7 +61,7 @@ export async function browserPost<T>(
   body?: unknown,
   options: BrowserRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getBaseUrl(path)}${path}`;
   return browserFetch<T>("POST", url, body, options);
 }
 
@@ -66,7 +73,7 @@ export async function browserPut<T>(
   body?: unknown,
   options: BrowserRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getBaseUrl(path)}${path}`;
   return browserFetch<T>("PUT", url, body, options);
 }
 
@@ -77,7 +84,7 @@ export async function browserDelete<T>(
   path: string,
   options: BrowserRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getBaseUrl(path)}${path}`;
   return browserFetch<T>("DELETE", url, undefined, options);
 }
 
