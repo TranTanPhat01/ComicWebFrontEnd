@@ -345,19 +345,20 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
                   </label>
                 </div>
 
-                {draft.isLocked && (
-                  <label className="admin-form__field admin-form__field--full">
-                    <span>Link sản phẩm Shopee (Affiliate Link) <span className="admin-form__required">*</span></span>
-                    <input
-                      className="input"
-                      type="url"
-                      value={draft.affiliateLink}
-                      onChange={(e) => setDraft((d) => ({ ...d, affiliateLink: e.target.value }))}
-                      placeholder="https://shope.ee/..."
-                      required
-                    />
-                  </label>
-                )}
+                <label className="admin-form__field admin-form__field--full">
+                  <span>Link sản phẩm Shopee (Affiliate Link / Popup Link) {draft.isLocked && <span className="admin-form__required">*</span>}</span>
+                  <input
+                    className="input"
+                    type="url"
+                    value={draft.affiliateLink}
+                    onChange={(e) => setDraft((d) => ({ ...d, affiliateLink: e.target.value }))}
+                    placeholder="https://shope.ee/..."
+                    required={draft.isLocked}
+                  />
+                  <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.25rem", display: "block" }}>
+                    Đây chính là Link Shopee dùng để hiển thị popup mở khóa chương truyện ngoài trang đọc.
+                  </span>
+                </label>
               </div>
 
               <div className="admin-modal__actions">
