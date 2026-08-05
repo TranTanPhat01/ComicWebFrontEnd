@@ -9,6 +9,7 @@ import { DEMO_STORIES } from "@/features/public-stories/demo/demo-stories";
 import type { PublicChapterDetailDto } from "@/features/public-chapters/types/public-chapter.types";
 import type { ApiResponse } from "@/lib/api/api-response";
 import type { ChapterSlugParam } from "@/constants/routes";
+import { parseEnvelopeData } from "@/lib/api/parse-envelope";
 
 interface ChapterPageProps {
   params: Promise<ChapterSlugParam>;
@@ -77,6 +78,16 @@ const getCachedPublicChapter = cache(async (
 ): Promise<ApiResponse<PublicChapterDetailDto>> => {
   const response = await getPublicChapterBySlug(storySlug, chapterSlug);
 
+  if (response.success && response.data) {
+    const unwrapped = parseEnvelopeData<PublicChapterDetailDto>(response.data);
+    if (unwrapped) {
+      return {
+        ...response,
+        data: unwrapped,
+      };
+    }
+  }
+
   if (!response.success && env.isDevelopment) {
     const demoStory = DEMO_STORIES.find((s) => s.slug === storySlug);
     if (demoStory) {
@@ -119,6 +130,16 @@ const getCachedPublicChapter = cache(async (
  */
 const getCachedStory = cache(async (storySlug: string) => {
   const response = await getPublicStoryBySlug(storySlug);
+
+  if (response.success && response.data) {
+    const unwrapped = parseEnvelopeData<{ title: string }>(response.data);
+    if (unwrapped) {
+      return {
+        ...response,
+        data: unwrapped,
+      };
+    }
+  }
 
   if (!response.success && env.isDevelopment) {
     const demo = DEMO_STORIES.find((s) => s.slug === storySlug);

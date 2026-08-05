@@ -11,6 +11,7 @@ import type { PublicChapterListItemDto } from "@/features/public-chapters/types/
 import type { ApiResponse } from "@/lib/api/api-response";
 import type { PaginatedResponse } from "@/types/pagination";
 import type { StorySlugParam } from "@/constants/routes";
+import { parseEnvelopeData } from "@/lib/api/parse-envelope";
 
 interface StoryPageProps {
   params: Promise<StorySlugParam>;
@@ -79,6 +80,16 @@ function getChapterMockTitle(slug: string, num: number): string {
  */
 const getCachedPublicStoryBySlug = cache(async (slug: string): Promise<ApiResponse<PublicStoryDetailDto>> => {
   const response = await getPublicStoryBySlug(slug);
+
+  if (response.success && response.data) {
+    const unwrapped = parseEnvelopeData<PublicStoryDetailDto>(response.data);
+    if (unwrapped) {
+      return {
+        ...response,
+        data: unwrapped,
+      };
+    }
+  }
 
   if (!response.success && env.isDevelopment) {
     const demo = DEMO_STORIES.find((s) => s.slug === slug);
