@@ -4431,6 +4431,32 @@ html.light .public-header__genres-dropdown {
   border-color: var(--color-border-hover) !important;
 }
 
+/* Theme Toggle Button */
+.admin-header__theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full) !important;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-surface-1) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.admin-header__theme-btn:hover {
+  background-color: var(--color-surface-3) !important;
+  border-color: var(--color-border-hover) !important;
+  color: var(--color-text-primary);
+}
+
+.admin-header__theme-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
 /* Modern inputs & forms */
 .admin-form .input {
   border: 1px solid var(--color-border);
