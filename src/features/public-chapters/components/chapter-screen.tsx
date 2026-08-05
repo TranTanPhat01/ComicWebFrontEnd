@@ -64,14 +64,6 @@ export function ChapterScreen({
       />
 
       <div className="container chapter-reader-screen__layout">
-        {/* Top Navigation */}
-        <ChapterNavigation
-          storySlug={storySlug}
-          previousSlug={chapter.previousChapter?.slug ?? null}
-          nextSlug={chapter.nextChapter?.slug ?? null}
-          position="top"
-        />
-
         {/* Main Text Content Article */}
         <div className="chapter-reader-screen__content-wrapper">
           {chapter.isLocked ? (
