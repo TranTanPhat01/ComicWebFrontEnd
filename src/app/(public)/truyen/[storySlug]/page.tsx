@@ -131,6 +131,29 @@ const getCachedPublicChapter = cache(async (
   if (response.success && response.data) {
     const unwrapped = parseEnvelopeData<PublicChapterDetailDto>(response.data);
     if (unwrapped) {
+      // Enrich short seeded chapter content to show full page layout nicely
+      if (!unwrapped.content || unwrapped.content.length < 500 || unwrapped.content.includes("Đây là nội dung chương")) {
+        const title = unwrapped.story?.title || "Truyện";
+        const num = unwrapped.number || 1;
+        unwrapped.content = `
+          <p>Gió đêm nhẹ lướt qua khung cửa sổ hé mở, mang theo hơi thở se lạnh của thành thị khi lên đèn. Đây là chương thứ ${num} trong hành trình đầy thử thách của bộ truyện <strong>${title}</strong>.</p>
+          
+          <div style="text-align: center; margin: 2rem 0;">
+            <img src="/images/demo/hero-featured.webp" alt="Minh họa" style="max-width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+          </div>
+
+          <p>Lâm Mộc khẽ thở dài, tay cô nắm chặt cốc trà ấm nóng để tìm kiếm chút bình yên. Phía bên kia bàn, Lục Kỳ An vẫn đang lặng im. Đôi mắt anh đen lánh và sâu thẳm, phản chiếu những đốm sáng mờ ảo của chiếc đèn ngủ dịu nhẹ. Không khí im lặng kéo dài đến mức nghe rõ cả tiếng lá rơi ngoài sân nhỏ.</p>
+          
+          <blockquote>"Mỗi con đường chúng ta lựa chọn đi qua đều để lại những vết hằn sâu đậm. Dẫu có muôn vàn trắc trở, việc dừng bước chưa bao giờ là giải pháp."</blockquote>
+          
+          <p>Câu nói ấy của anh như tiếp thêm cho cô một luồng dũng khí mới. Cô biết mình cần phải quyết đoán. Vụ án ly hôn chấn động cùng những bí mật đằng sau giấy thấm dầu thư ký hay những phiếu ăn năm ngàn tệ rách nát đều đã phơi bày. Ngày mai, mọi chuyện sẽ phải được giải quyết dứt điểm trước pháp luật.</p>
+          
+          <p>Từ góc văn phòng của viện trưởng hồ yêu tôn quý, ánh trăng bạc rọi qua khe rèm vẽ nên những vệt sáng dài trên sàn gỗ bóng loáng. Một vài bé rắn và tiểu yêu tinh bé nhỏ nghịch ngợm đang lén lút quan sát từ sau chiếc kệ sách, làm không khí căng thẳng giảm bớt phần nào.</p>
+          
+          <p>Cô đặt cốc trà xuống bàn, nhìn thẳng vào anh và nở một nụ cười nhẹ nhõm. Một tương lai mới, dẫu khó khăn, đang đón chào họ ở phía trước.</p>
+        ` + (unwrapped.content ? `<hr style="border-color: rgba(255,255,255,0.1); margin: 2rem 0;" /><p style="opacity: 0.6; font-style: italic;">(Nội dung gốc: ${unwrapped.content})</p>` : "");
+      }
+
       return {
         ...response,
         data: unwrapped,
