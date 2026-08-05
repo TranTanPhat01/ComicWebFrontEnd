@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "./auth-session";
+import { clearAuthCookies } from "./auth-cookies";
 import type { AuthSession } from "@/features/authentication/types/auth.types";
 
 /**
@@ -16,6 +17,11 @@ export async function requireAdmin(returnUrl?: string): Promise<AuthSession> {
   const session = await getSession();
 
   if (!session) {
+    try {
+      await clearAuthCookies();
+    } catch (e) {
+      // Ignore cookie errors during SSR
+    }
     const returnParam = returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : "";
     redirect(`/admin/login${returnParam}`);
   }
