@@ -192,7 +192,11 @@ export function AdminScraperScreen() {
         });
         if (!createResponse.success) throw new Error(createResponse.error?.message || "Lỗi khi tạo truyện mới.");
         if (!createResponse.data) throw new Error("Không nhận được phản hồi từ máy chủ.");
-        storyId = createResponse.data.id;
+        
+        const rawCreate = createResponse.data as any;
+        const createdStory = rawCreate && "data" in rawCreate ? rawCreate.data : rawCreate;
+        
+        storyId = createdStory.id;
         addLog("success", `Tạo truyện thành công! ID: ${storyId}`);
       } else {
         storyId = parseInt(selectedStoryId, 10);
