@@ -113,11 +113,16 @@ export function AdminScraperScreen() {
   useEffect(() => {
     async function loadStories() {
       try {
-        const response = await getAdminStoriesBrowser({ page: 1, pageSize: 250 });
+        const response = await getAdminStoriesBrowser({ page: 1, pageSize: 100 });
         if (response.success && response.data) {
           const raw = response.data as any;
-          if (Array.isArray(raw.items)) setStories(raw.items);
-          else if (Array.isArray(raw)) setStories(raw);
+          if (raw && "data" in raw && Array.isArray(raw.data)) {
+            setStories(raw.data);
+          } else if (Array.isArray(raw.items)) {
+            setStories(raw.items);
+          } else if (Array.isArray(raw)) {
+            setStories(raw);
+          }
         }
       } catch (err) {
         console.error("Failed to load stories for scraper", err);
@@ -162,7 +167,13 @@ export function AdminScraperScreen() {
       if (!metaResponse.success) throw new Error(metaResponse.error?.message || "Không thể lấy thông tin truyện.");
       if (!metaResponse.data) throw new Error("Dữ liệu truyện trả về trống.");
 
-      const meta = metaResponse.data;
+      const rawMeta = metaResponse.data as any;
+      const meta = rawMeta && "data" in rawMeta ? rawMeta.data : rawMeta;
+      
+      if (!meta || !meta.chapters || !Array.isArray(meta.chapters) || meta.chapters.length === 0) {
+        throw new Error("Không tìm thấy chương truyện nào tại URL nguồn này. Hãy nhập đúng URL chi tiết của truyện (không nhập URL trang chủ).");
+      }
+      
       addLog("success", `Truyện: "${meta.title}" — Tác giả: ${meta.authorName}`);
       addLog("info", `Tổng cộng ${meta.chapters.length} chương cần nạp.`);
       setStats((s) => ({ ...s, total: meta.chapters.length }));
