@@ -158,7 +158,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
 
     const response = await getAdminChapterByIdBrowser(storyId, chapter.id);
     if (response.success && response.data) {
-      const detail = response.data;
+      const detail = (response.data as any).data || response.data;
       setOriginalStatus(detail.status);
       setDraft({
         title: detail.title,
@@ -185,32 +185,32 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const chapterNum = Number(draft.chapterNumber);
-    if (!draft.title.trim()) { setError("Tiêu đề chương là bắt buộc."); return; }
+    if (!(draft.title || "").trim()) { setError("Tiêu đề chương là bắt buộc."); return; }
     if (isNaN(chapterNum) || chapterNum < 1) { setError("Số chương phải là số nguyên dương."); return; }
-    if (!draft.content.trim()) { setError("Nội dung chương là bắt buộc."); return; }
+    if (!(draft.content || "").trim()) { setError("Nội dung chương là bắt buộc."); return; }
 
     setSaving(true);
     setError(null);
 
     const response = editingId === null
       ? await createAdminChapter(storyId, {
-          title: draft.title.trim(),
+          title: (draft.title || "").trim(),
           chapterNumber: chapterNum,
-          content: draft.content.trim(),
+          content: (draft.content || "").trim(),
           isLocked: draft.isLocked,
-          affiliateLink: draft.isLocked ? draft.affiliateLink.trim() || null : null,
+          affiliateLink: draft.isLocked ? (draft.affiliateLink || "").trim() || null : null,
         } satisfies CreateChapterRequestDto)
       : await updateAdminChapter(storyId, editingId, {
-          title: draft.title.trim(),
+          title: (draft.title || "").trim(),
           chapterNumber: chapterNum,
-          content: draft.content.trim(),
+          content: (draft.content || "").trim(),
           version: draft.version,
           isLocked: draft.isLocked,
-          affiliateLink: draft.isLocked ? draft.affiliateLink.trim() || null : null,
+          affiliateLink: draft.isLocked ? (draft.affiliateLink || "").trim() || null : null,
         } satisfies UpdateChapterRequestDto);
 
     if (response.success && response.data) {
-      const newChapter = response.data;
+      const newChapter = (response.data as any).data || response.data;
       const currentVersion = newChapter.version;
 
       // Handle status workflow transition if it has changed

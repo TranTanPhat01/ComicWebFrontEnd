@@ -224,7 +224,7 @@ export function AdminScraperScreen() {
             title: chapter.title,
           });
           if (importResponse.success) {
-            const chapterId = importResponse.data;
+            const chapterId = (importResponse.data as any).data || importResponse.data;
             if (autoPublish && chapterId) {
               const pubRes = await publishAdminChapter(chapterId, 0);
               if (pubRes.success) {

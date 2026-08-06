@@ -192,7 +192,7 @@ export function AdminStoriesScreen() {
 
     const response = await getAdminStoryByIdBrowser(story.id);
     if (response.success && response.data) {
-      const detail = response.data;
+      const detail = (response.data as any).data || response.data;
       setOriginalStatus(detail.status);
       setDraft({
         title: detail.title,
@@ -219,11 +219,11 @@ export function AdminStoriesScreen() {
   // ── CRUD handlers ────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!draft.title.trim()) {
+    if (!(draft.title || "").trim()) {
       setError("Tên truyện là bắt buộc.");
       return;
     }
-    if (!draft.description.trim()) {
+    if (!(draft.description || "").trim()) {
       setError("Mô tả truyện là bắt buộc.");
       return;
     }
@@ -231,31 +231,31 @@ export function AdminStoriesScreen() {
     setError(null);
 
     const genresArray = draft.genres
-      ? draft.genres.split(",").map((g) => g.trim()).filter(Boolean)
+      ? draft.genres.split(",").map((g) => (g || "").trim()).filter(Boolean)
       : [];
 
     const response = editingId === null
       ? await createAdminStory({
-          title: draft.title.trim(),
-          slug: draft.slug.trim() || undefined,
-          description: draft.description.trim(),
-          authorName: draft.authorName.trim() || undefined,
-          coverImageUrl: draft.coverImageUrl.trim() || undefined,
+          title: (draft.title || "").trim(),
+          slug: (draft.slug || "").trim() || undefined,
+          description: (draft.description || "").trim(),
+          authorName: (draft.authorName || "").trim() || undefined,
+          coverImageUrl: (draft.coverImageUrl || "").trim() || undefined,
           genres: genresArray.length > 0 ? genresArray : undefined,
         } satisfies CreateStoryRequestDto)
       : await updateAdminStory(editingId, {
           id: editingId,
-          title: draft.title.trim(),
-          slug: draft.slug.trim() || undefined,
-          description: draft.description.trim(),
-          authorName: draft.authorName.trim() || undefined,
-          coverImageUrl: draft.coverImageUrl.trim() || undefined,
+          title: (draft.title || "").trim(),
+          slug: (draft.slug || "").trim() || undefined,
+          description: (draft.description || "").trim(),
+          authorName: (draft.authorName || "").trim() || undefined,
+          coverImageUrl: (draft.coverImageUrl || "").trim() || undefined,
           genres: genresArray.length > 0 ? genresArray : undefined,
           version: draft.version,
         } satisfies UpdateStoryRequestDto);
 
     if (response.success && response.data) {
-      const newStory = response.data;
+      const newStory = (response.data as any).data || response.data;
       const currentVersion = newStory.version;
       const storyIdStr = String(newStory.id);
 
