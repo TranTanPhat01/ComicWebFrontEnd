@@ -14,6 +14,7 @@ import {
   unpublishAdminStory,
   hideAdminStory,
   completeAdminStory,
+  restoreAdminStory,
 } from "../api/admin-stories-browser.api";
 import type {
   AdminStoryListItemDto,
@@ -108,6 +109,7 @@ export function AdminStoriesScreen() {
   const [filterStatus, setFilterStatus] = useState<AdminStoryStatus | "">("");
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -124,6 +126,7 @@ export function AdminStoriesScreen() {
       pageSize: PAGE_SIZE,
       search: search || undefined,
       status: filterStatus || undefined,
+      includeDeleted: showDeleted,
     });
     if (response.success && response.data) {
       setStories(extractList(response.data));
@@ -135,7 +138,7 @@ export function AdminStoriesScreen() {
       setStories([]);
     }
     setLoading(false);
-  }, [page, search, filterStatus]);
+  }, [page, search, filterStatus, showDeleted]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -309,6 +312,16 @@ export function AdminStoriesScreen() {
       await loadStories();
     } else {
       setError((response as { success: false; error: { message: string } }).error?.message ?? "Không thể xóa truyện.");
+    }
+  };
+
+  const handleRestore = async (story: AdminStoryListItemDto) => {
+    if (!window.confirm(`Bạn có chắc muốn khôi phục truyện "${story.title}"?`)) return;
+    const response = await restoreAdminStory(story.id, story.version);
+    if (response.success) {
+      await loadStories();
+    } else {
+      setError((response as { success: false; error: { message: string } }).error?.message ?? "Không thể khôi phục truyện.");
     }
   };
 
@@ -489,6 +502,17 @@ export function AdminStoriesScreen() {
                 {STATUS_LABELS[s]}
               </button>
             ))}
+
+            {/* Show Deleted Toggle */}
+            <label className="admin-toolbar__deleted-toggle" style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginLeft: "1.5rem", fontSize: "0.85rem", cursor: "pointer", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={showDeleted}
+                onChange={(e) => { setShowDeleted(e.target.checked); setPage(1); }}
+                style={{ cursor: "pointer" }}
+              />
+              <span>Hiển thị truyện đã xóa</span>
+            </label>
           </div>
         </div>
 
@@ -551,9 +575,15 @@ export function AdminStoriesScreen() {
 
                     {/* Status badge */}
                     <td className="admin-table__td admin-table__td--center">
-                      <span className={`status-badge status-badge--${story.status.toLowerCase()}`}>
-                        {STATUS_LABELS[story.status]}
-                      </span>
+                      {story.deletedAt ? (
+                        <span className="status-badge status-badge--danger" style={{ background: "rgba(239, 68, 68, 0.1)", color: "#EF4444" }}>
+                          Đã xóa
+                        </span>
+                      ) : (
+                        <span className={`status-badge status-badge--${story.status.toLowerCase()}`}>
+                          {STATUS_LABELS[story.status]}
+                        </span>
+                      )}
                     </td>
 
                     {/* Chapters */}
@@ -574,27 +604,39 @@ export function AdminStoriesScreen() {
                     {/* Actions */}
                     <td className="admin-table__td admin-table__td--right">
                       <div className="admin-table__actions">
-                        <Link
-                          href={`/admin/stories/${story.id}/chapters`}
-                          className="btn btn--ghost admin-table__action-btn"
-                          title="Quản lý chương"
-                        >
-                          Chương
-                        </Link>
-                        <button
-                          className="btn btn--secondary admin-table__action-btn"
-                          type="button"
-                          onClick={() => openEditModal(story)}
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          className="btn btn--ghost admin-table__action-btn admin-table__action-btn--danger"
-                          type="button"
-                          onClick={() => void handleDelete(story)}
-                        >
-                          Xóa
-                        </button>
+                        {story.deletedAt ? (
+                          <button
+                            className="btn btn--primary admin-table__action-btn"
+                            type="button"
+                            onClick={() => void handleRestore(story)}
+                          >
+                            Khôi phục
+                          </button>
+                        ) : (
+                          <>
+                            <Link
+                              href={`/admin/stories/${story.id}/chapters`}
+                              className="btn btn--ghost admin-table__action-btn"
+                              title="Quản lý chương"
+                            >
+                              Chương
+                            </Link>
+                            <button
+                              className="btn btn--secondary admin-table__action-btn"
+                              type="button"
+                              onClick={() => openEditModal(story)}
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              className="btn btn--ghost admin-table__action-btn admin-table__action-btn--danger"
+                              type="button"
+                              onClick={() => void handleDelete(story)}
+                            >
+                              Xóa
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

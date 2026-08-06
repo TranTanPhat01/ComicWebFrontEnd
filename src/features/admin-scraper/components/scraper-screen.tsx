@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getScrapedMetadata, importScrapedChapter } from "../api/admin-scraper.api";
 import { getAdminStoriesBrowser, createAdminStory } from "@/features/admin-stories/api/admin-stories-browser.api";
+import { publishAdminChapter } from "@/features/admin-chapters/api/admin-chapters-browser.api";
 import type { AdminStoryListItemDto } from "@/features/admin-stories/types/admin-story.types";
 
 // ── SVG Icons (Phosphor-style, consistent 2px visual weight) ─────────────────
@@ -100,6 +101,7 @@ export function AdminScraperScreen() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
+  const [autoPublish, setAutoPublish] = useState(true);
 
   const shouldAbortRef = useRef(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -222,8 +224,18 @@ export function AdminScraperScreen() {
             title: chapter.title,
           });
           if (importResponse.success) {
+            const chapterId = importResponse.data;
+            if (autoPublish && chapterId) {
+              const pubRes = await publishAdminChapter(chapterId, 0);
+              if (pubRes.success) {
+                addLog("success", `[${i + 1}/${total}] Đã nạp & xuất bản: ${chapter.title}`);
+              } else {
+                addLog("success", `[${i + 1}/${total}] Đã nạp: ${chapter.title} (Lỗi xuất bản: ${pubRes.error?.message || "Không rõ"})`);
+              }
+            } else {
+              addLog("success", `[${i + 1}/${total}] Đã nạp: ${chapter.title}`);
+            }
             successCount++;
-            addLog("success", `[${i + 1}/${total}] ${chapter.title}`);
           } else {
             failCount++;
             addLog("error", `[${i + 1}/${total}] Lỗi: ${importResponse.error?.message || "Không rõ"} — ${chapter.title}`);
@@ -362,6 +374,21 @@ export function AdminScraperScreen() {
                     <span>{error}</span>
                   </div>
                 )}
+
+                {/* Auto Publish Checkbox */}
+                <div className="scraper-field" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "1rem", marginBottom: "1rem" }}>
+                  <input
+                    id="auto-publish"
+                    type="checkbox"
+                    checked={autoPublish}
+                    onChange={(e) => setAutoPublish(e.target.checked)}
+                    disabled={isCrawling}
+                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                  />
+                  <label htmlFor="auto-publish" style={{ cursor: "pointer", fontSize: "0.875rem", userSelect: "none" }}>
+                    Tự động xuất bản chương sau khi cào thành công
+                  </label>
+                </div>
 
                 {/* Action button */}
                 {!isCrawling ? (

@@ -13,6 +13,7 @@ import {
   publishAdminChapter,
   unpublishAdminChapter,
   hideAdminChapter,
+  restoreAdminChapter,
 } from "../api/admin-chapters-browser.api";
 import type {
   AdminChapterListItemDto,
@@ -94,6 +95,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,6 +112,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
       pageSize: PAGE_SIZE,
       sort: "chapterNumber",
       desc: true,
+      includeDeleted: showDeleted,
     });
     if (response.success && response.data) {
       setChapters(extractList(response.data));
@@ -121,7 +124,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
       );
     }
     setLoading(false);
-  }, [storyId, page]);
+  }, [storyId, page, showDeleted]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -268,6 +271,52 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
     }
   };
 
+  const handleRestore = async (chapter: AdminChapterListItemDto) => {
+    if (!window.confirm(`Khôi phục chương ${chapter.chapterNumber}: "${chapter.title}"?`)) return;
+    const response = await restoreAdminChapter(storyId, chapter.id, chapter.version);
+    if (response.success) {
+      await loadChapters();
+    } else {
+      setError(
+        (response as { success: false; error: { message: string } }).error?.message ??
+          "Không thể khôi phục chương."
+      );
+    }
+  };
+
+  const handlePublishAllDrafts = async () => {
+    if (!window.confirm("Bạn có chắc muốn xuất bản tất cả chương nháp của truyện này?")) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const draftsRes = await getAdminChaptersBrowser(storyId, { page: 1, pageSize: 100, status: "Draft" });
+      if (draftsRes.success && draftsRes.data) {
+        const raw = draftsRes.data as any;
+        const items = Array.isArray(raw.data) ? raw.data : Array.isArray(raw.items) ? raw.items : Array.isArray(raw) ? raw : [];
+        const drafts = items.filter((c: any) => c.status === "Draft");
+        if (drafts.length === 0) {
+          alert("Không có chương nháp nào cần xuất bản.");
+          setSaving(false);
+          return;
+        }
+        
+        let count = 0;
+        for (const ch of drafts) {
+          const res = await publishAdminChapter(ch.id, ch.version);
+          if (res.success) count++;
+        }
+        alert(`Đã xuất bản thành công ${count}/${drafts.length} chương nháp!`);
+      } else {
+        setError("Không thể tải danh sách chương nháp.");
+      }
+    } catch (err: any) {
+      setError("Lỗi khi xuất bản hàng loạt: " + err.message);
+    } finally {
+      setSaving(false);
+      await loadChapters();
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
@@ -378,7 +427,15 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
           title={`Chương: ${storyTitle}`}
           description={`Quản lý danh sách chương · Tổng ${chapters.length} chương`}
           actions={
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button
+                className="btn btn--secondary"
+                type="button"
+                onClick={handlePublishAllDrafts}
+                disabled={saving}
+              >
+                ⚡ Xuất bản tất cả chương nháp
+              </button>
               <Link href={ROUTES.adminStories} className="btn btn--ghost">
                 ← Về danh sách truyện
               </Link>
@@ -406,6 +463,19 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
         </div>
 
         {error && !modalOpen && <p className="admin-error-msg">{error}</p>}
+
+        {/* Toolbar */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", cursor: "pointer", userSelect: "none" }}>
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(e) => { setShowDeleted(e.target.checked); setPage(1); }}
+              style={{ cursor: "pointer" }}
+            />
+            <span>Hiển thị chương đã xóa</span>
+          </label>
+        </div>
 
         {/* Table */}
         <div className="admin-table-wrapper">
@@ -445,30 +515,48 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
                       </span>
                       <span className="admin-table__story-slug">{chapter.slug}</span>
                     </td>
-                    <td className="admin-table__td admin-table__td--center">
-                      <span className={`status-badge status-badge--chapter-${chapter.status.toLowerCase()}`}>
-                        {STATUS_LABELS[chapter.status]}
-                      </span>
+                     <td className="admin-table__td admin-table__td--center">
+                      {chapter.deletedAt ? (
+                        <span className="status-badge status-badge--danger" style={{ background: "rgba(239, 68, 68, 0.1)", color: "#EF4444" }}>
+                          Đã xóa
+                        </span>
+                      ) : (
+                        <span className={`status-badge status-badge--chapter-${chapter.status.toLowerCase()}`}>
+                          {STATUS_LABELS[chapter.status]}
+                        </span>
+                      )}
                     </td>
                     <td className="admin-table__td admin-table__td--muted">
                       {formatDate(chapter.createAt)}
                     </td>
-                    <td className="admin-table__td admin-table__td--right">
+                     <td className="admin-table__td admin-table__td--right">
                       <div className="admin-table__actions">
-                        <button
-                          className="btn btn--secondary admin-table__action-btn"
-                          type="button"
-                          onClick={() => openEditModal(chapter)}
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          className="btn btn--ghost admin-table__action-btn admin-table__action-btn--danger"
-                          type="button"
-                          onClick={() => void handleDelete(chapter)}
-                        >
-                          Xóa
-                        </button>
+                        {chapter.deletedAt ? (
+                          <button
+                            className="btn btn--primary admin-table__action-btn"
+                            type="button"
+                            onClick={() => void handleRestore(chapter)}
+                          >
+                            Khôi phục
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="btn btn--secondary admin-table__action-btn"
+                              type="button"
+                              onClick={() => openEditModal(chapter)}
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              className="btn btn--ghost admin-table__action-btn admin-table__action-btn--danger"
+                              type="button"
+                              onClick={() => void handleDelete(chapter)}
+                            >
+                              Xóa
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
