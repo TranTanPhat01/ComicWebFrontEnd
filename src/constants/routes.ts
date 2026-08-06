@@ -26,6 +26,7 @@ export const ROUTES = {
   adminStoryChapters: (storyId: string) => `/admin/stories/${storyId}/chapters`,
   adminGenres: "/admin/genres",
   adminAuditLogs: "/admin/audit-logs",
+  adminScraper: "/admin/scraper",
 } as const;
 
 // Type-safe route params

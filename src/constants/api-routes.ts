@@ -63,6 +63,10 @@ export const API_ROUTES = {
       update: (genreId: number) => `${V1}/admin/genres/${genreId}`,
       delete: (genreId: number) => `${V1}/admin/genres/${genreId}`,
     },
+    scraper: {
+      metadata: `${V1}/admin/scraper/metadata`,
+      importChapter: (storyId: string | number) => `${V1}/admin/scraper/stories/${storyId}/chapter`,
+    },
     auditLogs: {
       list: `${V1}/admin/audit-logs`,
     },
