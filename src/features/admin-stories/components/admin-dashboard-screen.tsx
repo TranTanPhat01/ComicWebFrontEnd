@@ -95,6 +95,15 @@ export function AdminDashboardScreen() {
           <div className="stats-card__value">{loading ? "—" : formatNumber(stats?.lockedChapters ?? 0)}</div>
           <div className="stats-card__sub">chương có link mua sách</div>
         </div>
+ 
+        <div className="stats-card stats-card--accent-red" style={{ borderLeft: "4px solid #ef4444" }}>
+          <div className="stats-card__icon">🛒</div>
+          <div className="stats-card__label">Click Mua Sách</div>
+          <div className="stats-card__value" style={{ color: "#ef4444" }}>
+            {loading ? "—" : formatNumber(stats?.totalAffiliateClicks ?? 0)}
+          </div>
+          <div className="stats-card__sub">lượt click link Shopee</div>
+        </div>
       </div>
 
       {/* Quick Links */}

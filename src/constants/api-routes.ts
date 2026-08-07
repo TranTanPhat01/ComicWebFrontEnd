@@ -16,6 +16,9 @@ export const API_ROUTES = {
         `${V1}/stories/${storySlug}/chapters`,
       chapterDetail: (storySlug: string, chapterSlug: string) =>
         `${V1}/stories/${storySlug}/chapters/${chapterSlug}`,
+      settings: `${V1}/stories/settings`,
+      trackClick: (chapterId: string | number) =>
+        `${V1}/stories/chapters/${chapterId}/track-click`,
     },
   },
 
@@ -69,6 +72,10 @@ export const API_ROUTES = {
     },
     auditLogs: {
       list: `${V1}/admin/audit-logs`,
+    },
+    settings: `${V1}/admin/settings`,
+    upload: {
+      image: `${V1}/admin/upload/image`,
     },
   },
 } as const;

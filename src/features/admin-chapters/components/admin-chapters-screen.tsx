@@ -14,6 +14,7 @@ import {
   unpublishAdminChapter,
   hideAdminChapter,
   restoreAdminChapter,
+  scheduleAdminChapter,
 } from "../api/admin-chapters-browser.api";
 import type {
   AdminChapterListItemDto,
@@ -31,6 +32,7 @@ interface ChapterFormDraft {
   version: number;
   isLocked: boolean;
   affiliateLink: string;
+  scheduledAt: string;
 }
 
 const emptyDraft: ChapterFormDraft = {
@@ -41,6 +43,7 @@ const emptyDraft: ChapterFormDraft = {
   version: 0,
   isLocked: false,
   affiliateLink: "",
+  scheduledAt: "",
 };
 
 const STATUS_LABELS: Record<ChapterStatus, string> = {
@@ -79,6 +82,19 @@ function formatDate(dateStr: string) {
     month: "2-digit",
     year: "numeric",
   });
+}
+
+function toDatetimeLocal(isoString: string | null | undefined): string {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatDateTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 // ── Props ──────────────────────────────────────────────────────────────────────
@@ -152,6 +168,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
       version: chapter.version,
       isLocked: chapter.isLocked,
       affiliateLink: chapter.affiliateLink ?? "",
+      scheduledAt: toDatetimeLocal(chapter.scheduledAt),
     });
     setError(null);
     setModalOpen(true);
@@ -168,6 +185,7 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
         version: detail.version,
         isLocked: detail.isLocked,
         affiliateLink: detail.affiliateLink ?? "",
+        scheduledAt: toDatetimeLocal(detail.scheduledAt),
       });
     } else {
       setError("Không thể tải chi tiết chương.");
@@ -211,17 +229,17 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
 
     if (response.success && response.data) {
       const newChapter = (response.data as any).data || response.data;
-      const currentVersion = newChapter.version;
+      let latestVersion = newChapter.version;
 
       // Handle status workflow transition if it has changed
       if (editingId !== null && originalStatus !== null && originalStatus !== draft.status) {
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminChapter(newChapter.id, currentVersion);
+          workflowRes = await publishAdminChapter(newChapter.id, latestVersion);
         } else if (draft.status === "Draft") {
-          workflowRes = await unpublishAdminChapter(newChapter.id, currentVersion);
+          workflowRes = await unpublishAdminChapter(newChapter.id, latestVersion);
         } else if (draft.status === "Hidden") {
-          workflowRes = await hideAdminChapter(newChapter.id, currentVersion);
+          workflowRes = await hideAdminChapter(newChapter.id, latestVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -229,14 +247,17 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
           setSaving(false);
           await loadChapters();
           return;
+        } else if (workflowRes && workflowRes.data) {
+          const updatedChapter = (workflowRes.data as any).data || workflowRes.data;
+          latestVersion = updatedChapter.version;
         }
       } else if (editingId === null && draft.status !== "Draft") {
         // Publish/Hide newly created chapter immediately
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminChapter(newChapter.id, currentVersion);
+          workflowRes = await publishAdminChapter(newChapter.id, latestVersion);
         } else if (draft.status === "Hidden") {
-          workflowRes = await hideAdminChapter(newChapter.id, currentVersion);
+          workflowRes = await hideAdminChapter(newChapter.id, latestVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -244,6 +265,23 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
           setSaving(false);
           await loadChapters();
           return;
+        } else if (workflowRes && workflowRes.data) {
+          const updatedChapter = (workflowRes.data as any).data || workflowRes.data;
+          latestVersion = updatedChapter.version;
+        }
+      }
+
+      // Handle scheduled publishing for chapter when status is Draft
+      if (draft.status === "Draft") {
+        const nextScheduled = draft.scheduledAt ? new Date(draft.scheduledAt).toISOString() : null;
+        if (newChapter.scheduledAt !== nextScheduled) {
+          const scheduleRes = await scheduleAdminChapter(newChapter.id, nextScheduled, latestVersion);
+          if (!scheduleRes.success) {
+            setError(scheduleRes.error?.message ?? "Không thể thiết lập lịch hẹn giờ phát hành chương.");
+            setSaving(false);
+            await loadChapters();
+            return;
+          }
         }
       }
 
@@ -359,6 +397,19 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
                     ))}
                   </select>
                 </label>
+ 
+                {draft.status === "Draft" && (
+                  <label className="admin-form__field">
+                    <span>Hẹn giờ xuất bản (Hệ thống)</span>
+                    <input
+                      type="datetime-local"
+                      className="input"
+                      value={draft.scheduledAt}
+                      onChange={(e) => setDraft((d) => ({ ...d, scheduledAt: e.target.value }))}
+                      min={toDatetimeLocal(new Date().toISOString())}
+                    />
+                  </label>
+                )}
 
                 <label className="admin-form__field admin-form__field--full">
                   <span>Tiêu đề chương <span className="admin-form__required">*</span></span>
@@ -524,6 +575,11 @@ export function AdminChaptersScreen({ storyId, storyTitle }: AdminChaptersScreen
                         <span className={`status-badge status-badge--chapter-${chapter.status.toLowerCase()}`}>
                           {STATUS_LABELS[chapter.status]}
                         </span>
+                      )}
+                      {chapter.scheduledAt && chapter.status === "Draft" && (
+                        <div style={{ fontSize: "0.75rem", color: "var(--color-accent-orange)", marginTop: "0.3rem", fontWeight: "500" }}>
+                          ⏰ {formatDateTime(chapter.scheduledAt)}
+                        </div>
                       )}
                     </td>
                     <td className="admin-table__td admin-table__td--muted">

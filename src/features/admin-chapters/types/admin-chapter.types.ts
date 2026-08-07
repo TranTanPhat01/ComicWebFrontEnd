@@ -17,6 +17,7 @@ export interface AdminChapterListItemDto {
   updateAt: string | null;
   isLocked: boolean;
   affiliateLink: string | null;
+  scheduledAt: string | null;
 }
 
 export interface AdminChapterDetailDto {
@@ -34,6 +35,7 @@ export interface AdminChapterDetailDto {
   updateAt: string | null;
   isLocked: boolean;
   affiliateLink: string | null;
+  scheduledAt: string | null;
 }
 
 export type ChapterStatus = "Draft" | "Published" | "Hidden";

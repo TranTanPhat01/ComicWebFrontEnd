@@ -27,6 +27,7 @@ export const ROUTES = {
   adminGenres: "/admin/genres",
   adminAuditLogs: "/admin/audit-logs",
   adminScraper: "/admin/scraper",
+  adminSettings: "/admin/settings",
 } as const;
 
 // Type-safe route params

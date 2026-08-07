@@ -30,7 +30,7 @@ export async function CompletedStoriesSection() {
 
   // Fallback to local high-fidelity demo stories in development mode when connection fails OR database is empty
   if (!hasData) {
-    if (env.isDevelopment) {
+    if (env.enableDemoFallback) {
       completedStories = DEMO_STORIES.filter((s) => s.status === "Completed");
     } else {
       return null; // Gracefully hide if backend fails in production

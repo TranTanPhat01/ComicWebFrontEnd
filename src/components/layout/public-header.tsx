@@ -10,6 +10,12 @@ import { getPublicStoriesBrowser, getGenresBrowser } from "@/features/public-sto
 import type { PublicStoryListItemDto } from "@/features/public-stories/types/public-story.types";
 import { DEMO_STORIES } from "@/features/public-stories/demo/demo-stories";
 import { useTheme } from "@/providers/theme-provider";
+import {
+  getUserNotificationsBrowser,
+  markNotificationReadBrowser,
+  markAllNotificationsReadBrowser,
+  type UserNotificationDto
+} from "@/features/public-stories/api/notifications-browser.api";
 
 // ─── NavLinks sub-component ────────────────────────────────────────────────
 // Separated so usePathname can be consumed in a dedicated component.
@@ -93,6 +99,95 @@ export function PublicHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { bookmarks } = useBookmarks();
+  const [session, setSession] = useState<{ authenticated: boolean; user?: { username: string; role: string } } | null>(null);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<UserNotificationDto[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = React.useRef<HTMLDivElement>(null);
+
+  const loadNotifications = async () => {
+    if (!session?.authenticated) return;
+    try {
+      const response = await getUserNotificationsBrowser({ page: 1, pageSize: 10 });
+      if (response.success && response.data) {
+        const list = response.data.items || [];
+        setNotifications(list);
+        setUnreadCount(list.filter(n => !n.isRead).length);
+      }
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (session?.authenticated) {
+      loadNotifications();
+      interval = setInterval(loadNotifications, 30000); // Poll every 30s
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [session?.authenticated]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      const response = await markAllNotificationsReadBrowser();
+      if (response.success) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    } catch (err) {
+      console.error("Failed to mark all read", err);
+    }
+  };
+
+  const handleNotificationClick = async (notif: UserNotificationDto) => {
+    setShowNotifications(false);
+    if (!notif.isRead) {
+      try {
+        await markNotificationReadBrowser(notif.id);
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Failed to mark notification as read", err);
+      }
+    }
+  };
+
+  function timeAgo(dateString: string) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return "Vừa xong";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} phút trước`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    return `${days} ngày trước`;
+  }
+
+  useEffect(() => {
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          const data = await response.json();
+          setSession(data);
+        } else {
+          setSession({ authenticated: false });
+        }
+      } catch (err) {
+        setSession({ authenticated: false });
+      }
+    }
+    loadSession();
+  }, []);
+
   const searchParamVal = searchParams.get("search") || "";
   
   const [searchQuery, setSearchQuery] = useState(searchParamVal);
@@ -139,6 +234,10 @@ export function PublicHeader() {
       const isOutsideMobile = mobileSearchContainerRef.current && !mobileSearchContainerRef.current.contains(target);
       if (isOutsideDesktop && isOutsideMobile) {
         setShowSuggestions(false);
+      }
+
+      if (notificationsRef.current && !notificationsRef.current.contains(target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -365,17 +464,112 @@ export function PublicHeader() {
             )}
           </button>
 
+          {/* User Notifications Bell & Dropdown */}
+          {session?.authenticated && (
+            <div className="public-header__notification-container" ref={notificationsRef}>
+              <button
+                type="button"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`public-header__util-btn public-header__notification-btn${showNotifications ? " public-header__notification-btn--active" : ""}`}
+                aria-label="Thông báo"
+                title="Thông báo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="public-header__notification-badge">{unreadCount}</span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="public-header__notification-dropdown">
+                  <div className="public-header__notification-dropdown-header">
+                    <span className="public-header__notification-dropdown-title">Thông báo</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="public-header__notification-mark-all"
+                        type="button"
+                      >
+                        Đánh dấu đã đọc tất cả
+                      </button>
+                    )}
+                  </div>
+                  <div className="public-header__notification-list">
+                    {notifications.length === 0 ? (
+                      <div className="public-header__notification-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2} className="w-12 h-12 text-muted">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.961 8.961 0 002.3-5.541V9a9 9 0 00-9-9 9 9 0 00-9 9v1.231c0 2.243-.69 4.324-1.872 6.046M12 17.082c-.933 0-1.849-.044-2.75-.13M12 17.082c.972 0 1.925-.049 2.857-.145m-2.857.145a23.864 23.864 0 005.455-1.31 8.961 8.961 0 002.3-5.541V9a9 9 0 00-9-9 9 9 0 00-9 9v1.231c0 2.243-.69 4.324-1.872 6.046M12 17.082V21m0-3.918a3 3 0 11-5.714 0M12 17.082a24.255 24.255 0 01-5.714 0" />
+                        </svg>
+                        <p>Không có thông báo nào</p>
+                      </div>
+                    ) : (
+                      notifications.map(notif => {
+                        const targetUrl = notif.storySlug
+                          ? notif.chapterSlug
+                            ? `/truyen/${notif.storySlug}/chuong/${notif.chapterSlug}`
+                            : `/truyen/${notif.storySlug}`
+                          : "#";
+
+                        return (
+                          <Link
+                            key={notif.id}
+                            href={targetUrl}
+                            onClick={() => handleNotificationClick(notif)}
+                            className={`public-header__notification-item${!notif.isRead ? " public-header__notification-item--unread" : ""}`}
+                          >
+                            <div className="public-header__notification-item-content">
+                              <p className="public-header__notification-message">{notif.message}</p>
+                              <span className="public-header__notification-time">{timeAgo(notif.createAt)}</span>
+                            </div>
+                            {!notif.isRead && (
+                              <span className="public-header__notification-unread-dot" />
+                            )}
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Profile Button */}
-          <Link
-            href={ROUTES.login}
-            className="public-header__profile-btn"
-            aria-label="Tài khoản"
-            title="Đăng nhập / Đăng ký"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </Link>
+          {session?.authenticated && session.user ? (
+            <Link
+              href="/profile"
+              className="public-header__profile-btn"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "2.2rem",
+                height: "2.2rem",
+                borderRadius: "50%",
+                backgroundColor: "var(--color-primary, #f97316)",
+                color: "#ffffff",
+                fontWeight: "bold",
+                fontSize: "0.95rem",
+                textDecoration: "none"
+              }}
+              title={`Tài khoản: ${session.user.username}`}
+            >
+              {session.user.username[0].toUpperCase()}
+            </Link>
+          ) : (
+            <Link
+              href={ROUTES.login}
+              className="public-header__profile-btn"
+              aria-label="Tài khoản"
+              title="Đăng nhập / Đăng ký"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -484,14 +678,25 @@ export function PublicHeader() {
             >
               🔍 Tìm kiếm nâng cao
             </Link>
-            <Link
-              href={ROUTES.login}
-              className="public-header__mobile-link"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{ borderTop: "1px dashed var(--color-border)", marginTop: "var(--space-2)", paddingTop: "var(--space-2)" }}
-            >
-              👤 Đăng nhập / Đăng ký
-            </Link>
+            {session?.authenticated && session.user ? (
+              <Link
+                href="/profile"
+                className="public-header__mobile-link"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ borderTop: "1px dashed var(--color-border)", marginTop: "var(--space-2)", paddingTop: "var(--space-2)", color: "var(--color-primary)" }}
+              >
+                👤 Cá nhân ({session.user.username})
+              </Link>
+            ) : (
+              <Link
+                href={ROUTES.login}
+                className="public-header__mobile-link"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ borderTop: "1px dashed var(--color-border)", marginTop: "var(--space-2)", paddingTop: "var(--space-2)" }}
+              >
+                👤 Đăng nhập / Đăng ký
+              </Link>
+            )}
           </nav>
         </div>
       </div>

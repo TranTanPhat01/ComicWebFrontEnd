@@ -4,6 +4,7 @@ import { ErrorState } from "@/components/feedback/error-state";
 import { StoryDetailHero } from "./story-detail-hero";
 import { StoryDescription } from "./story-description";
 import { StoryInfoSidebar } from "./story-info-sidebar";
+import { CommentSection } from "./comment-section";
 import { ChapterList } from "@/features/public-chapters/components/chapter-list";
 import { env } from "@/lib/env";
 import type { PublicStoryDetailDto } from "../types/public-story.types";
@@ -26,7 +27,7 @@ export function StoryDetailScreen({
   currentSort,
   now,
 }: StoryDetailScreenProps) {
-  const isFallbackMode = env.isDevelopment && (typeof story.id === "string" ? (story.id as string).startsWith("demo-story") : story.id <= 7);
+  const isFallbackMode = env.enableDemoFallback && (typeof story.id === "string" ? (story.id as string).startsWith("demo-story") : story.id <= 7);
 
   // Extract chapters list and paginated metadata
   let chaptersList: PublicChapterListItemDto[] = [];
@@ -148,6 +149,11 @@ export function StoryDetailScreen({
         <aside className="story-detail-screen__sidebar">
           <StoryInfoSidebar story={story} />
         </aside>
+      </div>
+
+      {/* Story Comments Section */}
+      <div className="container" style={{ marginTop: "var(--space-6)", marginBottom: "var(--space-12)" }}>
+        <CommentSection storyId={story.id} />
       </div>
     </div>
   );

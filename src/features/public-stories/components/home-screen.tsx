@@ -110,7 +110,7 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
   let isFallbackMode = false;
 
   // Fallback to local high-fidelity demo stories in development mode when connection fails OR database is empty
-  if ((!response.success || storiesList.length === 0) && env.isDevelopment) {
+  if ((!response.success || storiesList.length === 0) && env.enableDemoFallback) {
     isFallbackMode = true;
 
     // Filter and paginate demo stories locally

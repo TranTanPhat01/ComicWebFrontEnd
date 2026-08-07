@@ -78,6 +78,18 @@ export async function browserPut<T>(
 }
 
 /**
+ * Performs a PATCH request from the browser.
+ */
+export async function browserPatch<T>(
+  path: string,
+  body?: unknown,
+  options: BrowserRequestOptions = {}
+): Promise<ApiResponse<T>> {
+  const url = `${getBaseUrl(path)}${path}`;
+  return browserFetch<T>("PATCH", url, body, options);
+}
+
+/**
  * Performs a DELETE request from the browser.
  */
 export async function browserDelete<T>(
@@ -96,10 +108,14 @@ async function browserFetch<T>(
   body: unknown,
   options: BrowserRequestOptions
 ): Promise<ApiResponse<T>> {
+  const isFormData = body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     Accept: "application/json",
   };
+
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (options.accessToken) {
     headers["Authorization"] = `Bearer ${options.accessToken}`;
@@ -113,7 +129,7 @@ async function browserFetch<T>(
     const response = await fetch(url, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (isFormData ? (body as any) : JSON.stringify(body)) : undefined,
       signal: options.signal,
       // Always include cookies for auth (HttpOnly cookie pattern)
       credentials: "include",

@@ -35,6 +35,13 @@ export const env = {
   get isProduction() {
     return this.nodeEnv === "production";
   },
+
+  /**
+   * Whether static demo fallback data is enabled when backend is down.
+   */
+  get enableDemoFallback() {
+    return process.env.NEXT_PUBLIC_ENABLE_DEMO_FALLBACK === "true";
+  },
 } as const;
 
 // ─── Server-only env variables ─────────────────────────────────────────────────

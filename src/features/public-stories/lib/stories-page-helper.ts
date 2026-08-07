@@ -60,7 +60,7 @@ export async function fetchStoriesPage(
   }
 
   // Dev fallback
-  if (env.isDevelopment) {
+  if (env.enableDemoFallback) {
     const filtered = fallbackFilter ? DEMO_STORIES.filter(fallbackFilter) : [...DEMO_STORIES];
     const totalCount = filtered.length;
     const totalPages = Math.ceil(totalCount / pageSize);

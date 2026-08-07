@@ -15,6 +15,8 @@ import {
   hideAdminStory,
   completeAdminStory,
   restoreAdminStory,
+  scheduleAdminStory,
+  uploadStoryCoverBrowser,
 } from "../api/admin-stories-browser.api";
 import type {
   AdminStoryListItemDto,
@@ -33,6 +35,7 @@ interface StoryFormDraft {
   status: AdminStoryStatus;
   genres: string;
   version: number;
+  scheduledAt: string;
 }
 
 const emptyDraft: StoryFormDraft = {
@@ -44,6 +47,7 @@ const emptyDraft: StoryFormDraft = {
   status: "Draft",
   genres: "",
   version: 0,
+  scheduledAt: "",
 };
 
 const STATUS_LABELS: Record<AdminStoryStatus, string> = {
@@ -95,6 +99,19 @@ function formatDate(dateStr: string) {
   });
 }
 
+function toDatetimeLocal(isoString: string | null | undefined): string {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatDateTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export function AdminStoriesScreen() {
   const [stories, setStories] = useState<AdminStoryListItemDto[]>([]);
@@ -116,6 +133,33 @@ export function AdminStoriesScreen() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [originalStatus, setOriginalStatus] = useState<AdminStoryStatus | null>(null);
   const [draft, setDraft] = useState<StoryFormDraft>(emptyDraft);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError("Kích thước file không được vượt quá 2MB.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError("");
+    try {
+      const response = await uploadStoryCoverBrowser(file);
+      if (response.success) {
+        setDraft((d) => ({ ...d, coverImageUrl: response.data }));
+      } else {
+        setUploadError(response.error.message || "Tải ảnh lên thất bại.");
+      }
+    } catch {
+      setUploadError("Có lỗi xảy ra khi kết nối server.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // ── Data fetching ────────────────────────────────────────────────────────────
   const loadStories = useCallback(async () => {
@@ -171,6 +215,8 @@ export function AdminStoriesScreen() {
     setOriginalStatus(null);
     setDraft(emptyDraft);
     setError(null);
+    setUploadError("");
+    setUploading(false);
     setModalOpen(true);
   };
 
@@ -186,8 +232,11 @@ export function AdminStoriesScreen() {
       status: story.status,
       genres: "",
       version: story.version,
+      scheduledAt: toDatetimeLocal(story.scheduledAt),
     });
     setError(null);
+    setUploadError("");
+    setUploading(false);
     setModalOpen(true);
 
     const response = await getAdminStoryByIdBrowser(story.id);
@@ -203,6 +252,7 @@ export function AdminStoriesScreen() {
         status: detail.status,
         genres: detail.genres ? detail.genres.join(", ") : "",
         version: detail.version,
+        scheduledAt: toDatetimeLocal(detail.scheduledAt),
       });
     } else {
       setError("Không thể tải thông tin chi tiết truyện.");
@@ -258,18 +308,19 @@ export function AdminStoriesScreen() {
       const newStory = (response.data as any).data || response.data;
       const currentVersion = newStory.version;
       const storyIdStr = String(newStory.id);
+      let latestVersion = currentVersion;
 
       // Handle status workflow transition if it has changed
       if (editingId !== null && originalStatus !== null && originalStatus !== draft.status) {
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminStory(storyIdStr, currentVersion);
+          workflowRes = await publishAdminStory(storyIdStr, latestVersion);
         } else if (draft.status === "Draft") {
-          workflowRes = await unpublishAdminStory(storyIdStr, currentVersion);
+          workflowRes = await unpublishAdminStory(storyIdStr, latestVersion);
         } else if (draft.status === "Hidden") {
-          workflowRes = await hideAdminStory(storyIdStr, currentVersion);
+          workflowRes = await hideAdminStory(storyIdStr, latestVersion);
         } else if (draft.status === "Completed") {
-          workflowRes = await completeAdminStory(storyIdStr, currentVersion);
+          workflowRes = await completeAdminStory(storyIdStr, latestVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -277,16 +328,19 @@ export function AdminStoriesScreen() {
           setSaving(false);
           await loadStories();
           return;
+        } else if (workflowRes && workflowRes.data) {
+          const updatedStory = (workflowRes.data as any).data || workflowRes.data;
+          latestVersion = updatedStory.version;
         }
       } else if (editingId === null && draft.status !== "Draft") {
         // Handle publishing on newly created story
         let workflowRes;
         if (draft.status === "Published") {
-          workflowRes = await publishAdminStory(storyIdStr, currentVersion);
+          workflowRes = await publishAdminStory(storyIdStr, latestVersion);
         } else if (draft.status === "Hidden") {
-          workflowRes = await hideAdminStory(storyIdStr, currentVersion);
+          workflowRes = await hideAdminStory(storyIdStr, latestVersion);
         } else if (draft.status === "Completed") {
-          workflowRes = await completeAdminStory(storyIdStr, currentVersion);
+          workflowRes = await completeAdminStory(storyIdStr, latestVersion);
         }
 
         if (workflowRes && !workflowRes.success) {
@@ -294,6 +348,23 @@ export function AdminStoriesScreen() {
           setSaving(false);
           await loadStories();
           return;
+        } else if (workflowRes && workflowRes.data) {
+          const updatedStory = (workflowRes.data as any).data || workflowRes.data;
+          latestVersion = updatedStory.version;
+        }
+      }
+
+      // Handle scheduled publishing when status is Draft
+      if (draft.status === "Draft") {
+        const nextScheduled = draft.scheduledAt ? new Date(draft.scheduledAt).toISOString() : null;
+        if (newStory.scheduledAt !== nextScheduled) {
+          const scheduleRes = await scheduleAdminStory(storyIdStr, nextScheduled, latestVersion);
+          if (!scheduleRes.success) {
+            setError(scheduleRes.error?.message ?? "Không thể thiết lập lịch hẹn giờ phát hành.");
+            setSaving(false);
+            await loadStories();
+            return;
+          }
         }
       }
 
@@ -375,6 +446,19 @@ export function AdminStoriesScreen() {
                     ))}
                   </select>
                 </label>
+ 
+                {draft.status === "Draft" && (
+                  <label className="admin-form__field">
+                    <span>Hẹn giờ xuất bản (Hệ thống)</span>
+                    <input
+                      type="datetime-local"
+                      className="input"
+                      value={draft.scheduledAt}
+                      onChange={(e) => setDraft((d) => ({ ...d, scheduledAt: e.target.value }))}
+                      min={toDatetimeLocal(new Date().toISOString())}
+                    />
+                  </label>
+                )}
 
                 <label className="admin-form__field">
                   <span>Tác giả</span>
@@ -388,16 +472,57 @@ export function AdminStoriesScreen() {
 
 
 
-                <label className="admin-form__field admin-form__field--full">
-                  <span>URL Ảnh bìa</span>
-                  <input
-                    className="input"
-                    value={draft.coverImageUrl}
-                    onChange={(e) => setDraft((d) => ({ ...d, coverImageUrl: e.target.value }))}
-                    placeholder="https://example.com/cover.jpg"
-                    type="url"
-                  />
-                </label>
+                <div className="admin-form__field admin-form__field--full" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <span>Ảnh bìa truyện <span className="admin-form__hint">(Tải tệp từ máy hoặc nhập URL trực tiếp)</span></span>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        className="input"
+                        value={draft.coverImageUrl}
+                        onChange={(e) => setDraft((d) => ({ ...d, coverImageUrl: e.target.value }))}
+                        placeholder="Nhập URL ảnh bìa (hoặc tải tệp bên phải)..."
+                        type="url"
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                    <div>
+                      <label className="btn btn--secondary" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        {uploading ? "Đang tải..." : "Tải ảnh lên"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  {uploadError && (
+                    <span style={{ color: "var(--danger)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+                      ⚠️ {uploadError}
+                    </span>
+                  )}
+                  {draft.coverImageUrl && (
+                    <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={draft.coverImageUrl}
+                        alt="Preview bìa truyện"
+                        style={{ width: "70px", height: "100px", objectFit: "cover", borderRadius: "4px", border: "1px solid var(--border-color)" }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/images/fallback-cover.jpg";
+                        }}
+                      />
+                      <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+                        Xem trước ảnh bìa truyện
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <label className="admin-form__field admin-form__field--full">
                   <span>Thể loại <span className="admin-form__hint">(cách nhau bởi dấu phẩy)</span></span>
@@ -583,6 +708,11 @@ export function AdminStoriesScreen() {
                         <span className={`status-badge status-badge--${story.status.toLowerCase()}`}>
                           {STATUS_LABELS[story.status]}
                         </span>
+                      )}
+                      {story.scheduledAt && story.status === "Draft" && (
+                        <div style={{ fontSize: "0.75rem", color: "var(--color-accent-orange)", marginTop: "0.3rem", fontWeight: "500" }}>
+                          ⏰ {formatDateTime(story.scheduledAt)}
+                        </div>
                       )}
                     </td>
 

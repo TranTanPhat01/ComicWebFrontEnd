@@ -31,27 +31,88 @@ export default function LoginPage() {
     }, 1500);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleMergeLocalData = async () => {
+    try {
+      const storedBookmarks = localStorage.getItem("comic_web_bookmarks");
+      const storedHistory = localStorage.getItem("comic_web_reading_history");
+ 
+      const bookmarks = storedBookmarks ? JSON.parse(storedBookmarks) : [];
+      const history = storedHistory ? JSON.parse(storedHistory) : [];
+ 
+      const follows = Array.isArray(bookmarks) 
+        ? bookmarks.map((b: any) => Number(b.id)).filter(id => !isNaN(id) && id > 0)
+        : [];
+ 
+      const histories = Array.isArray(history)
+        ? history
+            .map((h: any) => ({
+              storyId: Number(h.storyId),
+              chapterId: Number(h.chapterId),
+              lastReadAt: h.readAt || new Date().toISOString()
+            }))
+            .filter((h: any) => !isNaN(h.storyId) && !isNaN(h.chapterId) && h.storyId > 0 && h.chapterId > 0)
+        : [];
+ 
+      if (follows.length > 0 || histories.length > 0) {
+        const { mergeUserActivitiesBrowser } = await import("@/features/public-stories/api/user-activities-browser.api");
+        await mergeUserActivitiesBrowser({ follows, histories });
+        
+        // Dọn dẹp local storage sau khi merge thành công
+        localStorage.removeItem("comic_web_bookmarks");
+        localStorage.removeItem("comic_web_reading_history");
+      }
+    } catch (err) {
+      console.error("Failed to merge local data to server", err);
+    }
+  };
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-
-    if (!email) {
-      toast("Vui lòng nhập địa chỉ email.", "warning");
+ 
+    if (!email.trim()) {
+      toast("Vui lòng nhập địa chỉ email hoặc tên đăng nhập.", "warning");
       return;
     }
-
+ 
     if (!password) {
       toast("Vui lòng nhập mật khẩu.", "warning");
       return;
     }
-
+ 
     setLoading(true);
-
-    setTimeout(() => {
+ 
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usernameOrEmail: email.trim(),
+          password,
+        }),
+      });
+ 
+      if (response.ok) {
+        toast("Đăng nhập thành công! Chào mừng bạn quay trở lại.", "success");
+        
+        // Thực hiện đồng bộ dữ liệu trước khi chuyển trang
+        await handleMergeLocalData();
+        
+        router.push(ROUTES.home);
+        setTimeout(() => {
+          window.location.href = ROUTES.home;
+        }, 200);
+      } else {
+        const errData = await response.json().catch(() => null);
+        toast(errData?.detail || errData?.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại.", "error");
+      }
+    } catch (err) {
+      toast("Không thể kết nối đến máy chủ xác thực.", "error");
+    } finally {
       setLoading(false);
-      toast("Đăng nhập thành công! Chào mừng bạn quay trở lại.", "success");
-      router.push(ROUTES.home);
-    }, 1200);
+    }
   };
 
   return (
@@ -218,6 +279,13 @@ export default function LoginPage() {
             </svg>
             Facebook
           </button>
+        </div>
+ 
+        <div className="login-card__footer" style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
+          Chưa có tài khoản?{" "}
+          <Link href="/register" style={{ color: "#f97316", fontWeight: "bold", textDecoration: "underline" }}>
+            Đăng ký ngay
+          </Link>
         </div>
       </div>
     </div>

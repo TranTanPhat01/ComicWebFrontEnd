@@ -14,7 +14,6 @@ async function proxyRequest(method: string, request: Request, pathSegments: stri
   const targetUrl = `${BACKEND_URL}/api/v1/admin/${path}${search}`;
   
   const headers = new Headers();
-  headers.set("Content-Type", "application/json");
   headers.set("Accept", "application/json");
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
@@ -22,9 +21,18 @@ async function proxyRequest(method: string, request: Request, pathSegments: stri
   
   let body: any = undefined;
   if (method !== "GET" && method !== "HEAD") {
-    try {
-      body = await request.text();
-    } catch {}
+    const contentType = request.headers.get("content-type") || "";
+    if (contentType.includes("multipart/form-data")) {
+      headers.set("content-type", contentType);
+      try {
+        body = await request.arrayBuffer();
+      } catch {}
+    } else {
+      headers.set("Content-Type", "application/json");
+      try {
+        body = await request.text();
+      } catch {}
+    }
   }
   
   try {

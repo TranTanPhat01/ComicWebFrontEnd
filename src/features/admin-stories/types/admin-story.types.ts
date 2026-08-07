@@ -85,4 +85,5 @@ export interface AdminStatsDto {
   totalLogs: number;
   lockedChapters: number;
   ongoingStories: number;
+  totalAffiliateClicks: number;
 }

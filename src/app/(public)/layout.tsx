@@ -1,6 +1,7 @@
 import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { DynamicScripts } from "@/components/shared/dynamic-scripts";
 
 /**
  * Public layout — wraps all public-facing routes.
@@ -13,6 +14,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="public-layout">
+      <DynamicScripts />
       <PublicHeader />
       <main className="public-layout__main">{children}</main>
       <PublicFooter />

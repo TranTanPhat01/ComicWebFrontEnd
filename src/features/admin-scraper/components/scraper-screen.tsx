@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getScrapedMetadata, importScrapedChapter } from "../api/admin-scraper.api";
 import { getAdminStoriesBrowser, createAdminStory } from "@/features/admin-stories/api/admin-stories-browser.api";
-import { publishAdminChapter } from "@/features/admin-chapters/api/admin-chapters-browser.api";
+import { publishAdminChapter, getAdminChaptersBrowser } from "@/features/admin-chapters/api/admin-chapters-browser.api";
 import type { AdminStoryListItemDto } from "@/features/admin-stories/types/admin-story.types";
 
 // ── SVG Icons (Phosphor-style, consistent 2px visual weight) ─────────────────
@@ -102,6 +102,8 @@ export function AdminScraperScreen() {
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
   const [autoPublish, setAutoPublish] = useState(true);
+  const [failedChapters, setFailedChapters] = useState<any[]>([]);
+  const [activeStoryId, setActiveStoryId] = useState<number | null>(null);
 
   const shouldAbortRef = useRef(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -258,6 +260,64 @@ export function AdminScraperScreen() {
     } finally {
       setIsCrawling(false);
     }
+  };
+
+  const handleRetryFailed = async () => {
+    if (failedChapters.length === 0 || !activeStoryId) return;
+    setIsCrawling(true);
+    setError(null);
+    shouldAbortRef.current = false;
+    addLog("info", `Bắt đầu cào lại ${failedChapters.length} chương cào lỗi...`);
+    
+    const listToRetry = [...failedChapters];
+    const total = listToRetry.length;
+    let successCount = 0;
+    let failCount = 0;
+    const remainingFailed: any[] = [];
+
+    setStats({ total, success: 0, failed: 0 });
+    setCrawlingProgress(0);
+
+    for (let i = 0; i < total; i++) {
+      if (shouldAbortRef.current) {
+        addLog("error", `Đã dừng thử lại. Thành công: ${successCount}/${total} chương.`);
+        break;
+      }
+      const chapter = listToRetry[i];
+      setStatusMessage(`[Retry ${i + 1}/${total}] Đang nạp: ${chapter.title}`);
+
+      try {
+        const importResponse = await importScrapedChapter(activeStoryId, {
+          url: chapter.url,
+          chapterNumber: chapter.chapterNumber,
+          title: chapter.title,
+        });
+        if (importResponse.success) {
+          const chapterId = (importResponse.data as any).data || importResponse.data;
+          if (autoPublish && chapterId) {
+            await publishAdminChapter(chapterId, 0);
+          }
+          addLog("success", `[Retry ${i + 1}/${total}] Thành công: ${chapter.title}`);
+          successCount++;
+        } else {
+          failCount++;
+          const errMsg = importResponse.error?.message || "Lỗi không rõ";
+          addLog("error", `[Retry ${i + 1}/${total}] Thất bại: ${errMsg} — ${chapter.title}`);
+          remainingFailed.push(chapter);
+        }
+      } catch (chapterErr: any) {
+        failCount++;
+        addLog("error", `[Retry ${i + 1}/${total}] Lỗi hệ thống: ${chapterErr.message} — ${chapter.title}`);
+        remainingFailed.push(chapter);
+      }
+
+      setCrawlingProgress(Math.round(((i + 1) / total) * 100));
+      setStats({ total, success: successCount, failed: failCount });
+      setFailedChapters([...remainingFailed]);
+    }
+
+    setStatusMessage("Kết thúc quá trình thử lại.");
+    setIsCrawling(false);
   };
 
   const isIdle = !isCrawling && crawlingProgress === 0 && logs.length === 0;
@@ -421,6 +481,38 @@ export function AdminScraperScreen() {
               <div className="scraper-stat-card__value scraper-stat-card__value--error">{stats.failed}</div>
             </div>
           </div>
+
+          {/* Failed Chapters & Retry Panel */}
+          {failedChapters.length > 0 && (
+            <div className="scraper-panel" style={{ marginTop: "1rem", border: "1px solid rgba(239, 68, 68, 0.2)", background: "rgba(239, 68, 68, 0.02)" }}>
+              <div className="scraper-panel__header" style={{ padding: "0.8rem 1rem", borderBottom: "1px solid rgba(239, 68, 68, 0.1)" }}>
+                <div style={{ color: "#ef4444", width: 18, height: 18, display: "inline-flex" }}><IconXCircle /></div>
+                <div>
+                  <div className="scraper-panel__title" style={{ fontSize: "0.95rem", color: "#ef4444" }}>Chương Cào Lỗi ({failedChapters.length})</div>
+                </div>
+              </div>
+              <div className="scraper-panel__body" style={{ padding: "0.8rem 1rem" }}>
+                <div style={{ maxHeight: "150px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.8rem" }}>
+                  {failedChapters.map((ch, i) => (
+                    <div key={i} style={{ fontSize: "0.8rem", color: "var(--color-text-primary)", display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                      <span>#{ch.chapterNumber}: {ch.title}</span>
+                      <span style={{ color: "#ef4444", fontSize: "0.75rem" }}>{ch.error}</span>
+                    </div>
+                  ))}
+                </div>
+                {!isCrawling && (
+                  <button
+                    type="button"
+                    onClick={handleRetryFailed}
+                    className="scraper-btn scraper-btn--start"
+                    style={{ width: "100%", background: "#f97316", borderColor: "#f97316", padding: "0.4rem" }}
+                  >
+                    🔄 Thử lại các chương lỗi ({failedChapters.length})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── RIGHT COLUMN ────────────────────────────────────────────────── */}

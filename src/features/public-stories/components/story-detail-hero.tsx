@@ -8,6 +8,7 @@ import type { PublicStoryDetailDto, PublicStoryListItemDto } from "../types/publ
 import { useBookmarks } from "../hooks/use-bookmarks";
 import { useToast } from "@/providers/toast-provider";
 import { useReadingHistory } from "@/features/public-chapters/hooks/use-reading-history";
+import { StarRating } from "./star-rating";
 
 interface StoryDetailHeroProps {
   story: PublicStoryDetailDto;
@@ -105,6 +106,16 @@ export function StoryDetailHero({
           </div>
 
           <h1 className="story-detail-hero__title">{translateText(story.title)}</h1>
+          
+          {/* Star Rating Widget */}
+          <div style={{ margin: "var(--space-3) 0" }}>
+            <StarRating
+              storyId={story.id}
+              initialAverageRating={story.averageRating}
+              initialRatingCount={story.ratingCount}
+              initialMyRating={story.myRating}
+            />
+          </div>
 
           {/* Author/Artist */}
           <div className="story-detail-hero__meta-row">
@@ -133,6 +144,12 @@ export function StoryDetailHero({
             <div className="story-detail-hero__stat-item">
               <span className="story-detail-hero__stat-value">{chapterCount}</span>
               <span className="story-detail-hero__stat-label">Chương</span>
+            </div>
+            <div className="story-detail-hero__stat-item">
+              <span className="story-detail-hero__stat-value">
+                {(story.viewCount ?? 0) >= 1000 ? `${((story.viewCount ?? 0) / 1000).toFixed(1)}k` : (story.viewCount ?? 0)}
+              </span>
+              <span className="story-detail-hero__stat-label">Lượt xem</span>
             </div>
             <div className="story-detail-hero__stat-item">
               <span className="story-detail-hero__stat-value">{formattedDate}</span>

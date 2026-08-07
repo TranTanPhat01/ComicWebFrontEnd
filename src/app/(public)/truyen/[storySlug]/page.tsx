@@ -95,7 +95,7 @@ const getCachedPublicStoryBySlug = cache(async (slug: string): Promise<ApiRespon
     }
   }
 
-  if (!response.success && env.isDevelopment) {
+  if (!response.success && env.enableDemoFallback) {
     const demo = DEMO_STORIES.find((s) => s.slug === slug);
     if (demo) {
       const detail: PublicStoryDetailDto = {
@@ -110,6 +110,10 @@ const getCachedPublicStoryBySlug = cache(async (slug: string): Promise<ApiRespon
         publishedAt: demo.publishedAt,
         updatedAt: demo.updatedAt,
         chapters: [], // Mock chapters list, populated via getCachedChapters separate call in FE
+        averageRating: 4.5,
+        ratingCount: 1,
+        myRating: null,
+        viewCount: 100,
       };
       return {
         success: true,
@@ -138,7 +142,7 @@ const getCachedPublicChapter = cache(async (
     }
   }
 
-  if (!response.success && env.isDevelopment) {
+  if (!response.success && env.enableDemoFallback) {
     const demoStory = DEMO_STORIES.find((s) => s.slug === storySlug);
     if (demoStory) {
       const parts = chapterSlug.split("-");
@@ -214,7 +218,7 @@ async function getCachedChapters(
   }
 
   // Fallback to local generated chapters in development mode when connection is offline or database has no chapters
-  if ((!response.success || totalCount === 0) && env.isDevelopment) {
+  if ((!response.success || totalCount === 0) && env.enableDemoFallback) {
     const mockChapters: PublicChapterListItemDto[] = [];
     for (let i = 1; i <= totalChapters; i++) {
       mockChapters.push({

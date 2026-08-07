@@ -88,7 +88,7 @@ const getCachedPublicChapter = cache(async (
     }
   }
 
-  if (!response.success && env.isDevelopment) {
+  if (!response.success && env.enableDemoFallback) {
     const demoStory = DEMO_STORIES.find((s) => s.slug === storySlug);
     if (demoStory) {
       // Parse chapter number from slug: chuong-N
@@ -141,7 +141,7 @@ const getCachedStory = cache(async (storySlug: string) => {
     }
   }
 
-  if (!response.success && env.isDevelopment) {
+  if (!response.success && env.enableDemoFallback) {
     const demo = DEMO_STORIES.find((s) => s.slug === storySlug);
     if (demo) {
       return {

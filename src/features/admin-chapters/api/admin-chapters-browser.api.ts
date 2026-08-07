@@ -115,8 +115,8 @@ export async function restoreAdminChapter(
  */
 export async function scheduleAdminChapter(
   chapterId: string | number,
-  scheduledAt: string,
+  scheduledAt: string | null,
   version: number
 ): Promise<ApiResponse<AdminChapterDetailDto>> {
-  return browserPost(`/api/v1/admin/chapters/${chapterId}/schedule`, { scheduledAt, version });
+  return browserPost(`/api/v1/admin/chapters/${chapterId}/schedule`, { scheduledAt: scheduledAt || null, version });
 }

@@ -110,10 +110,10 @@ export async function completeAdminStory(
  */
 export async function scheduleAdminStory(
   storyId: string | number,
-  scheduledAt: string,
+  scheduledAt: string | null,
   version: number
 ): Promise<ApiResponse<AdminStoryDetailDto>> {
-  return browserPost(API_ROUTES.admin.stories.schedule(storyId), { scheduledAt, version });
+  return browserPost(API_ROUTES.admin.stories.schedule(storyId), { scheduledAt: scheduledAt || null, version });
 }
 
 /**
@@ -131,4 +131,15 @@ export async function restoreAdminStory(
  */
 export async function getAdminStatsBrowser(): Promise<ApiResponse<AdminStatsDto>> {
   return browserGet(API_ROUTES.admin.stats);
+}
+
+/**
+ * Uploads a story cover image. Browser-side.
+ */
+export async function uploadStoryCoverBrowser(
+  file: File
+): Promise<ApiResponse<string>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return browserPost(API_ROUTES.admin.upload.image, formData);
 }

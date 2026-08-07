@@ -30,6 +30,10 @@ export interface PublicStoryListItemDto {
   latestChapter: PublicChapterSummaryDto | null;
   publishedAt: string | null;
   updatedAt: string | null;
+  averageRating?: number | null;
+  ratingCount?: number;
+  myRating?: number | null;
+  viewCount?: number;
 }
 
 /** Detail returned in GET /api/v1/stories/{slug}. Matches BE PublicStoryDetailDto.
@@ -49,6 +53,10 @@ export interface PublicStoryDetailDto {
   updatedAt: string | null;
   /** Embedded chapters (only in detail response). */
   chapters: PublicChapterSummaryDto[];
+  averageRating?: number | null;
+  ratingCount?: number;
+  myRating?: number | null;
+  viewCount?: number;
 }
 
 /** Genre item returned from /api/v1/stories/genres. Matches BE GenreListItemDto. */

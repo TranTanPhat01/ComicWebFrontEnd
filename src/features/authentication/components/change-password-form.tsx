@@ -71,7 +71,10 @@ export function ChangePasswordForm() {
 
       if (response.ok) {
         // Redirect to login page with a success query parameter
-        window.location.href = "/admin/login?message=ChangePasswordSuccess";
+        const isAdmin = typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
+        window.location.href = isAdmin 
+          ? "/admin/login?message=ChangePasswordSuccess" 
+          : "/login?message=ChangePasswordSuccess";
       } else {
         const errorData = await response.json().catch(() => null);
         
