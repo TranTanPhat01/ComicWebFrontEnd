@@ -36,8 +36,8 @@ export function StoryDetailHero({
   const formattedDate = story.updatedAt
     ? new Date(story.updatedAt).toLocaleDateString("vi-VN", {
         year: "numeric",
-        month: "long",
-        day: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       })
     : "Đang cập nhật";
 
@@ -106,16 +106,6 @@ export function StoryDetailHero({
           </div>
 
           <h1 className="story-detail-hero__title">{translateText(story.title)}</h1>
-          
-          {/* Star Rating Widget */}
-          <div style={{ margin: "var(--space-3) 0" }}>
-            <StarRating
-              storyId={story.id}
-              initialAverageRating={story.averageRating}
-              initialRatingCount={story.ratingCount}
-              initialMyRating={story.myRating}
-            />
-          </div>
 
           {/* Author/Artist */}
           <div className="story-detail-hero__meta-row">
@@ -182,7 +172,7 @@ export function StoryDetailHero({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                ĐỌC TỪ ĐẦU
+                ĐỌC NGAY
               </Link>
             ) : (
               <button

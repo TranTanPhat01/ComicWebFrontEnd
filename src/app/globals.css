@@ -2075,7 +2075,7 @@ html.light .public-header__genres-dropdown {
 
 .story-detail-hero__info {
   flex-grow: 1;
-  color: var(--color-text-light);
+  color: #ffffff;
   padding-bottom: var(--space-2);
 }
 
@@ -2123,6 +2123,7 @@ html.light .public-header__genres-dropdown {
   margin: 0 0 var(--space-3) 0;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
 .story-detail-hero__meta-row {
@@ -2130,12 +2131,12 @@ html.light .public-header__genres-dropdown {
   flex-wrap: wrap;
   gap: var(--space-4);
   font-size: 0.925rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: var(--space-4);
 }
 
 .story-detail-hero__meta-item strong {
-  color: #fff;
+  color: #ffffff;
 }
 
 .story-detail-hero__genres {
@@ -2878,16 +2879,38 @@ html.light .public-header__genres-dropdown {
     padding-left: 0;
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
     padding-bottom: var(--space-3);
-    gap: var(--space-6);
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  .story-detail-hero__stat-value {
+    font-size: 1rem;
+  }
+
+  .story-detail-hero__stat-label {
+    font-size: 0.675rem;
   }
 
   .story-detail-hero__actions {
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
     width: 100%;
   }
 
   .story-detail-hero__btn {
     width: 100%;
+    padding: var(--space-2-5) var(--space-3);
+    font-size: 0.775rem;
+    border-radius: var(--radius-md);
+  }
+
+  .story-detail-hero__btn--continue {
+    grid-column: span 2;
+  }
+
+  .story-detail-hero__btn--outline {
+    grid-column: span 2;
   }
 }
 

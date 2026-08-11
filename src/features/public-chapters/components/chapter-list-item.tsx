@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import type { PublicChapterListItemDto } from "../types/public-chapter.types";
+import { getCleanChapterTitle } from "../utils/chapter-utils";
 
 interface ChapterListItemProps {
   chapter: PublicChapterListItemDto;
@@ -22,6 +23,8 @@ export function ChapterListItem({ chapter, storySlug, now }: ChapterListItemProp
       })
     : "Đang cập nhật";
 
+  const cleanTitle = getCleanChapterTitle(chapter.number, chapter.title);
+
   return (
     <div className="chapter-list-item">
       <Link
@@ -32,9 +35,11 @@ export function ChapterListItem({ chapter, storySlug, now }: ChapterListItemProp
           <span className="chapter-list-item__number">
             Chương {chapter.number}
           </span>
-          <span className="chapter-list-item__title" title={chapter.title}>
-            {chapter.title ? `- ${chapter.title}` : ""}
-          </span>
+          {cleanTitle && (
+            <span className="chapter-list-item__title" title={chapter.title ?? ""}>
+              - {cleanTitle}
+            </span>
+          )}
           {isNew && <span className="chapter-list-item__new-badge">Mới</span>}
         </div>
         <span className="chapter-list-item__date">{formattedDate}</span>

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { getCleanChapterTitle } from "../utils/chapter-utils";
 
 interface ChapterReaderHeaderProps {
   storyTitle: string;
@@ -25,6 +26,8 @@ export function ChapterReaderHeader({
       })
     : "Đang cập nhật";
 
+  const cleanTitle = getCleanChapterTitle(chapterNumber, chapterTitle);
+
   return (
     <header className="chapter-reader-header">
       <div className="container">
@@ -47,7 +50,7 @@ export function ChapterReaderHeader({
           </Link>
           <h1 className="chapter-reader-header__title">
             Chương {chapterNumber}
-            {chapterTitle ? `: ${chapterTitle}` : ""}
+            {cleanTitle ? `: ${cleanTitle}` : ""}
           </h1>
           <div className="chapter-reader-header__meta">
             <span className="chapter-reader-header__story-name">{storyTitle}</span>
