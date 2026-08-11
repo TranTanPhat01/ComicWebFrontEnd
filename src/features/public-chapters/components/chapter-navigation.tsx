@@ -1,11 +1,22 @@
-import React from "react";
+"use client";
+
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+interface ChapterNavItem {
+  slug: string;
+  number: number;
+  title: string;
+}
 
 interface ChapterNavigationProps {
   storySlug: string;
   previousSlug: string | null;
   nextSlug: string | null;
   position?: "top" | "bottom";
+  allChapters?: ChapterNavItem[];
+  currentChapterSlug?: string;
 }
 
 export function ChapterNavigation({
@@ -13,7 +24,31 @@ export function ChapterNavigation({
   previousSlug,
   nextSlug,
   position = "top",
+  allChapters,
+  currentChapterSlug,
 }: ChapterNavigationProps) {
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleChapterSelect = (slug: string) => {
+    setDropdownOpen(false);
+    router.push(`/truyen/${storySlug}?chuong-id=${slug}`);
+  };
+
   return (
     <nav
       className={`chapter-navigation chapter-navigation--${position}`}
@@ -43,17 +78,61 @@ export function ChapterNavigation({
         </button>
       )}
 
-      {/* Chapters list button */}
-      <Link
-        href={`/truyen/${storySlug}`}
-        className="chapter-navigation__btn chapter-navigation__btn--list"
-        aria-label="Xem danh sách chương của truyện"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-        <span className="chapter-navigation__btn-text">Mục lục</span>
-      </Link>
+      {/* Chapter list / Dropdown button */}
+      <div className="chapter-navigation__list-wrapper" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => {
+            if (allChapters && allChapters.length > 0) {
+              setDropdownOpen((prev) => !prev);
+            } else {
+              router.push(`/truyen/${storySlug}`);
+            }
+          }}
+          className="chapter-navigation__btn chapter-navigation__btn--list"
+          aria-label="Xem danh sách chương"
+          aria-expanded={dropdownOpen}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span className="chapter-navigation__btn-text">Mục lục</span>
+        </button>
+
+        {/* Dropdown list */}
+        {dropdownOpen && allChapters && allChapters.length > 0 && (
+          <div className="chapter-navigation__dropdown" role="listbox" aria-label="Danh sách chương">
+            <div className="chapter-navigation__dropdown-header">
+              <span>Danh sách chương</span>
+              <button
+                type="button"
+                className="chapter-navigation__dropdown-close"
+                onClick={() => setDropdownOpen(false)}
+                aria-label="Đóng mục lục"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="chapter-navigation__dropdown-list">
+              {allChapters.map((ch) => (
+                <button
+                  key={ch.slug}
+                  type="button"
+                  role="option"
+                  aria-selected={ch.slug === currentChapterSlug}
+                  className={`chapter-navigation__dropdown-item${ch.slug === currentChapterSlug ? " chapter-navigation__dropdown-item--active" : ""}`}
+                  onClick={() => handleChapterSelect(ch.slug)}
+                >
+                  <span className="chapter-navigation__dropdown-num">Chương {ch.number}</span>
+                  {ch.title && ch.title !== `Chương ${ch.number}` && (
+                    <span className="chapter-navigation__dropdown-title">{ch.title}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Next Chapter button */}
       {nextSlug ? (
@@ -83,3 +162,5 @@ export function ChapterNavigation({
 }
 
 export default ChapterNavigation;
+
+

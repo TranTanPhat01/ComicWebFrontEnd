@@ -7536,7 +7536,186 @@ html.light .hero-nav-arrow:hover {
   color: #b45309;
 }
 
+/* -- Chapter Navigation Dropdown -- */
+.chapter-navigation__list-wrapper {
+  position: relative;
+}
 
+.chapter-navigation__dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  max-width: 92vw;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
+.chapter-navigation__dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
 
+.chapter-navigation__dropdown-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #64748b;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.chapter-navigation__dropdown-close:hover { background: #f1f5f9; }
 
+.chapter-navigation__dropdown-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+  scrollbar-width: thin;
+}
+
+.chapter-navigation__dropdown-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.55rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  transition: background 0.12s;
+  border-bottom: 1px solid #f1f5f9;
+}
+.chapter-navigation__dropdown-item:last-child { border-bottom: none; }
+.chapter-navigation__dropdown-item:hover { background: #f8fafc; }
+.chapter-navigation__dropdown-item--active {
+  background: #fef9f0;
+  border-left: 3px solid #f97316;
+}
+
+.chapter-navigation__dropdown-num {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.chapter-navigation__dropdown-title {
+  font-size: 0.76rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+/* -- Locked-notice page (when user dismisses popup) -- */
+.chapter-locked-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  min-height: 50vh;
+}
+
+.chapter-locked-notice__icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.chapter-locked-notice__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.chapter-locked-notice__desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.7;
+  max-width: 480px;
+  margin-bottom: 1.5rem;
+}
+
+.chapter-locked-notice__reopen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #ee4d2d 0%, #f97316 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(238,77,45,0.3);
+}
+.chapter-locked-notice__reopen-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* -- Affiliate modal – Mobile responsive fixes -- */
+@media (max-width: 640px) {
+  .affiliate-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .affiliate-modal-card {
+    border-radius: 16px 16px 0 0;
+    max-height: 90dvh;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .affiliate-modal-title {
+    font-size: 0.95rem;
+  }
+
+  .affiliate-modal-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.95rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .affiliate-modal-image {
+    max-height: 180px;
+  }
+
+  .affiliate-modal-link {
+    font-size: 0.78rem;
+    word-break: break-all;
+  }
+}
+
+/* -- Hide Facebook / X (Twitter) share icons on mobile -- */
+@media (max-width: 768px) {
+  .story-detail-hero__share-btn--fb,
+  .story-detail-hero__share-btn--tw {
+    display: none !important;
+  }
+}
