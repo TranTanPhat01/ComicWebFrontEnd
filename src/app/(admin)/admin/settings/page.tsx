@@ -11,6 +11,9 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  
+  // Tab quản lý cấu hình
+  const [activeTab, setActiveTab] = useState<"ads" | "scripts">("ads");
 
   // States cho các setting cụ thể
   const [headScripts, setHeadScripts] = useState("");
@@ -81,25 +84,43 @@ export default function AdminSettingsPage() {
     <div className="admin-settings-page">
       <PageHeader
         title="Cấu hình hệ thống"
-        description="Quản lý mã nhúng scripts marketing (Google Analytics, Facebook Pixel) và các thẻ HTML meta custom."
+        description="Quản lý link liên kết Shopee popup mở khóa, mã nhúng scripts marketing (Analytics, Pixel) và SEO custom."
       />
 
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
-          <div className="admin-table__skeleton" style={{ width: "100%", height: "200px" }} />
+        <div style={{ display: "flex", justifyContent: "center", padding: "5rem" }}>
+          <div className="admin-table__skeleton" style={{ width: "100%", height: "250px" }} />
         </div>
       ) : (
-        <div className="admin-form-container" style={{ maxWidth: "800px", marginTop: "2rem" }}>
-          {error && <p className="admin-form__error" style={{ marginBottom: "1rem" }}>{error}</p>}
+        <div style={{ marginTop: "1rem" }}>
+          {/* Navigation Tabs */}
+          <div className="settings-tabs">
+            <button
+              type="button"
+              className={`settings-tab-btn ${activeTab === "ads" ? "settings-tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("ads")}
+            >
+              🛒 Cấu hình Ads & Popup
+            </button>
+            <button
+              type="button"
+              className={`settings-tab-btn ${activeTab === "scripts" ? "settings-tab-btn--active" : ""}`}
+              onClick={() => setActiveTab("scripts")}
+            >
+              🌐 Nhúng Scripts & SEO
+            </button>
+          </div>
+
+          {error && <p className="admin-form__error" style={{ marginBottom: "1.5rem" }}>{error}</p>}
           {successMsg && (
             <p 
               className="admin-form__success" 
               style={{ 
-                marginBottom: "1rem", 
+                marginBottom: "1.5rem", 
                 color: "#22c55e", 
                 backgroundColor: "rgba(34, 197, 94, 0.1)", 
-                padding: "0.8rem", 
-                borderRadius: "var(--radius-md)", 
+                padding: "1rem", 
+                borderRadius: "var(--radius-lg)", 
                 fontWeight: "bold" 
               }}
             >
@@ -107,77 +128,161 @@ export default function AdminSettingsPage() {
             </p>
           )}
 
-          <form className="admin-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <label className="admin-form__field admin-form__field--full">
-              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Chèn mã nhúng HEAD Script (Google Analytics, Facebook Pixel, Google Tag Manager)</span>
-              <textarea
-                className="input"
-                rows={6}
-                value={headScripts}
-                onChange={(e) => setHeadScripts(e.target.value)}
-                placeholder="<!-- Paste Google Analytics hoặc Facebook Pixel tracking code vào đây -->"
-                style={{ fontFamily: "monospace", fontSize: "0.85rem" }}
-              />
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Mã này sẽ tự động được inject vào thẻ &lt;head&gt; ngoài trang public của trang đọc truyện.</span>
-            </label>
+          <form className="settings-grid" onSubmit={handleSubmit}>
+            {/* Left Column: Form Fields */}
+            <div className="settings-card">
+              {activeTab === "ads" ? (
+                <div>
+                  <h3 className="settings-card__title">🛒 Thiết lập Popup Shopee Mở Khóa</h3>
+                  
+                  <div className="settings-field-group">
+                    <label className="settings-label">
+                      <span className="settings-label__text">Link Shopee Mặc Định (Global Affiliate Link)</span>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        value={globalAffiliateLink}
+                        onChange={(e) => setGlobalAffiliateLink(e.target.value)}
+                        placeholder="Ví dụ: https://s.shopee.vn/5VQs1u9Ziv"
+                      />
+                      <span className="settings-label__desc">
+                        Link Shopee mặc định sẽ hiển thị làm popup mở khóa từ chương 2 của mọi truyện (áp dụng khi chương đó chưa cài link riêng).
+                      </span>
+                    </label>
 
-            <label className="admin-form__field admin-form__field--full">
-              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Chèn mã nhúng BODY Script (Ví dụ: Facebook Chat Widget, Tawk.to, hoặc các analytics scripts chạy ở body)</span>
-              <textarea
-                className="input"
-                rows={6}
-                value={bodyScripts}
-                onChange={(e) => setBodyScripts(e.target.value)}
-                placeholder="<!-- Paste chat widget script hoặc các body scripts khác vào đây -->"
-                style={{ fontFamily: "monospace", fontSize: "0.85rem" }}
-              />
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Mã này sẽ tự động được inject vào phần thẻ &lt;body&gt; ngoài trang public.</span>
-            </label>
+                    <label className="settings-label" style={{ marginTop: "1rem" }}>
+                      <span className="settings-label__text">Ảnh Sản Phẩm Mặc Định (Global Affiliate Image URL)</span>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        value={globalAffiliateImage}
+                        onChange={(e) => setGlobalAffiliateImage(e.target.value)}
+                        placeholder="Ví dụ: https://pub-img.com/giay-an-top-gia.jpg"
+                      />
+                      <span className="settings-label__desc">
+                        URL hình ảnh sản phẩm thực tế hiển thị ở trung tâm của popup (Có thể copy link ảnh từ trang sản phẩm Shopee).
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="settings-card__title">🌐 Nhúng Mã Theo Dõi & SEO</h3>
+                  
+                  <div className="settings-field-group">
+                    <label className="settings-label">
+                      <span className="settings-label__text">Nhúng mã vào HEAD Script (Google Analytics, Facebook Pixel,...)</span>
+                      <textarea
+                        className="settings-textarea"
+                        rows={5}
+                        value={headScripts}
+                        onChange={(e) => setHeadScripts(e.target.value)}
+                        placeholder="<!-- Paste Google Analytics hoặc Facebook Pixel tracking code vào đây -->"
+                      />
+                      <span className="settings-label__desc">Mã này sẽ tự động được inject vào thẻ &lt;head&gt; ngoài trang public của website.</span>
+                    </label>
 
-            <label className="admin-form__field admin-form__field--full">
-              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Thẻ Meta HTML Tùy Chỉnh (Custom Meta Tags)</span>
-              <textarea
-                className="input"
-                rows={5}
-                value={metaTags}
-                onChange={(e) => setMetaTags(e.target.value)}
-                placeholder='<meta name="google-site-verification" content="XYZ" />'
-                style={{ fontFamily: "monospace", fontSize: "0.85rem" }}
-              />
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Các thẻ meta tùy chỉnh dùng để xác thực quyền sở hữu website với Google Search Console, Bing Webmaster tools.</span>
-            </label>
+                    <label className="settings-label" style={{ marginTop: "1rem" }}>
+                      <span className="settings-label__text">Nhúng mã vào BODY Script (Ví dụ: Facebook Chat, Tawk.to,...)</span>
+                      <textarea
+                        className="settings-textarea"
+                        rows={5}
+                        value={bodyScripts}
+                        onChange={(e) => setBodyScripts(e.target.value)}
+                        placeholder="<!-- Paste chat widget script hoặc các body scripts khác vào đây -->"
+                      />
+                      <span className="settings-label__desc">Mã này sẽ tự động được inject vào phần cuối thẻ &lt;body&gt; ngoài trang public.</span>
+                    </label>
 
-            <label className="admin-form__field admin-form__field--full">
-              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Link Shopee Mặc Định (Global Affiliate Link)</span>
-              <input
-                type="text"
-                className="input"
-                value={globalAffiliateLink}
-                onChange={(e) => setGlobalAffiliateLink(e.target.value)}
-                placeholder="https://shopee.vn/..."
-                style={{ fontSize: "0.9rem" }}
-              />
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Link Shopee mặc định sẽ hiển thị làm popup mở khóa từ chương 2 của mọi truyện (nếu chương đó chưa có link riêng).</span>
-            </label>
+                    <label className="settings-label" style={{ marginTop: "1rem" }}>
+                      <span className="settings-label__text">Thẻ Meta HTML Tùy Chỉnh (Custom Meta Tags)</span>
+                      <textarea
+                        className="settings-textarea"
+                        rows={4}
+                        value={metaTags}
+                        onChange={(e) => setMetaTags(e.target.value)}
+                        placeholder='<meta name="google-site-verification" content="XYZ" />'
+                      />
+                      <span className="settings-label__desc">Dùng để xác thực quyền sở hữu website với Google Search Console, Bing Webmaster tools.</span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
-            <label className="admin-form__field admin-form__field--full">
-              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Ảnh Sản Phẩm Mặc Định (Global Affiliate Image URL)</span>
-              <input
-                type="text"
-                className="input"
-                value={globalAffiliateImage}
-                onChange={(e) => setGlobalAffiliateImage(e.target.value)}
-                placeholder="https://..."
-                style={{ fontSize: "0.9rem" }}
-              />
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Đường dẫn (URL) ảnh sản phẩm Shopee sẽ được hiển thị ở phần trung tâm của popup mở khóa (Ví dụ: ảnh gói giấy ăn, ảnh cuốn truyện,...).</span>
-            </label>
-
-            <div className="admin-modal__actions" style={{ marginTop: "1.5rem", justifyContent: "flex-start" }}>
-              <button className="btn btn--primary" type="submit" disabled={saving}>
-                {saving ? "Đang lưu cấu hình..." : "Lưu cấu hình hệ thống"}
-              </button>
+              {/* Action Button */}
+              <div style={{ marginTop: "2rem", borderTop: "1px solid var(--color-border)", paddingTop: "1.5rem" }}>
+                <button 
+                  className="btn btn--primary" 
+                  type="submit" 
+                  disabled={saving}
+                  style={{
+                    padding: "0.85rem 2rem",
+                    fontSize: "0.95rem",
+                    fontWeight: "700",
+                    background: "linear-gradient(135deg, var(--color-primary-light), #388f8b)",
+                    border: "none",
+                    boxShadow: "0 4px 15px rgba(56, 143, 139, 0.3)",
+                    cursor: "pointer"
+                  }}
+                >
+                  {saving ? "Đang lưu cấu hình..." : "💾 Lưu cấu hình hệ thống"}
+                </button>
+              </div>
             </div>
+
+            {/* Right Column: Live Popup Mockup Preview (Only visible in Ads tab) */}
+            {activeTab === "ads" && (
+              <div className="preview-sticky">
+                <div className="preview-container">
+                  <div className="preview-header">
+                    👁️ TRỰC QUAN POPUP TRÊN TRANG ĐỌC
+                  </div>
+                  
+                  <div className="preview-mockup-popup">
+                    {/* Mock Close Button */}
+                    <div style={{ alignSelf: "flex-end", cursor: "not-allowed", color: "#94a3b8", fontSize: "0.9rem", marginTop: "-0.5rem", marginBottom: "0.5rem" }}>
+                      ✕
+                    </div>
+
+                    <h4 className="preview-mockup-title">
+                      Mời bạn CLICK vào liên kết bên dưới và <span style={{ color: "#ef4444", fontWeight: "800" }}>Mở Ứng Dụng Shopee</span> để mở khóa toàn bộ chương truyện!
+                    </h4>
+
+                    <div className="preview-mockup-link">
+                      👉 {globalAffiliateLink || "https://shopee.vn/..."}
+                    </div>
+
+                    {globalAffiliateImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={globalAffiliateImage} 
+                        alt="Ảnh sản phẩm demo" 
+                        className="preview-mockup-image"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="preview-mockup-image-placeholder">
+                        🖼️ [ Chưa có ảnh sản phẩm ]
+                      </div>
+                    )}
+
+                    <button type="button" className="preview-mockup-btn" disabled>
+                      🛒 Mở Ứng Dụng Shopee & Mở Khóa
+                    </button>
+
+                    <p className="preview-mockup-note">
+                      Lưu ý: Khi bấm mở khóa, toàn bộ chương của truyện sẽ được mở khóa đọc tự do trong 7 ngày. Rất mong Quý độc giả ủng hộ.
+                    </p>
+
+                    <div className="preview-mockup-footer">
+                      Xó Truyện và đội ngũ Editor xin chân thành cảm ơn!
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </div>
       )}
