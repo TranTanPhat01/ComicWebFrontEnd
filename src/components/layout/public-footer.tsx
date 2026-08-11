@@ -129,9 +129,9 @@ export function PublicFooter() {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="public-footer__link"
+                className="public-footer__community-btn"
               >
-                Fanpage Facebook
+                Tham Gia Cộng Đồng
               </a>
               <Link href={ROUTES.adminLogin} className="public-footer__link">
                 Quản trị viên

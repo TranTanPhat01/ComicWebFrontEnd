@@ -1584,6 +1584,34 @@ html.light .public-header__genres-dropdown {
   color: var(--color-primary-light);
 }
 
+.public-footer__community-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111111;
+  background-color: #f1b23c;
+  padding: var(--space-2-5) var(--space-6);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 10px rgba(241, 178, 60, 0.2);
+  margin-top: var(--space-1);
+  align-self: flex-start;
+}
+
+.public-footer__community-btn:hover {
+  background-color: #f5c15e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(241, 178, 60, 0.35);
+  color: #000000;
+}
+
+.public-footer__community-btn:active {
+  transform: translateY(0);
+}
+
 .public-footer__bottom {
   margin-top: var(--space-10);
   border-top: 1px solid var(--color-navy-muted);
