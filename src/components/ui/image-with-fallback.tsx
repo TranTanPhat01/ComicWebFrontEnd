@@ -36,7 +36,7 @@ export function ImageWithFallback({
 
   const hasImage = sanitizedSrc && !error;
 
-  console.log("ImageWithFallback Render:", { src, sanitizedSrc, hasImage, error });
+
 
   return (
     <div className="image-container-wrapper">
@@ -44,8 +44,7 @@ export function ImageWithFallback({
         <img
           src={sanitizedSrc!}
           alt={alt}
-          onError={(e) => {
-            console.error("ImageWithFallback Error loading src:", sanitizedSrc, "Event:", e);
+          onError={() => {
             setError(true);
           }}
           className={className}
