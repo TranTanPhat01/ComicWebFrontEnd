@@ -10,17 +10,14 @@ import { ReadingProgress } from "./reading-progress";
 import { BackToTopButton } from "./back-to-top-button";
 import { useReadingHistory } from "../hooks/use-reading-history";
 import type { PublicChapterDetailDto } from "../types/public-chapter.types";
+import { useRouter } from "next/navigation";
 import { trackAffiliateClickBrowser } from "../api/public-chapters-browser.api";
-
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 interface ChapterScreenProps {
   chapter: PublicChapterDetailDto;
   storySlug: string;
   storyTitle: string;
   coverUrl?: string;
-  allChapters?: { slug: string; number: number; title: string }[];
-  currentChapterSlug?: string;
 }
 
 export function ChapterScreen({
@@ -28,30 +25,32 @@ export function ChapterScreen({
   storySlug,
   storyTitle,
   coverUrl,
-  allChapters,
-  currentChapterSlug,
 }: ChapterScreenProps) {
+  const router = useRouter();
   const { saveEntry } = useReadingHistory();
   const [isLocked, setIsLocked] = useState(chapter.isLocked);
-  // dismissed = true khi user nhấn X → hiện trang "chương bị khoá" thay vì popup
-  const [dismissed, setDismissed] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [clickedAffiliate, setClickedAffiliate] = useState(false);
+  const [canConfirm, setCanConfirm] = useState(false);
+  const [canSkip, setCanSkip] = useState(false);
 
-  // Check localStorage on mount/chapter change
+  // Check localStorage on mount/change
   useEffect(() => {
     try {
       const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
       const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
-
+      
       const isChapterUnlocked = unlockedChapters.includes(chapter.id);
-
+      
       let isStoryUnlocked = false;
       const unlockTime = unlockedStories[storySlug];
       if (unlockTime) {
-        const isExpired = Date.now() - unlockTime > ONE_DAY_MS;
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+        const isExpired = Date.now() - unlockTime > SEVEN_DAYS_MS;
         if (!isExpired) {
           isStoryUnlocked = true;
         } else {
-          // Clean up expired entry (hết hạn 24h)
+          // Clean up expired entry
           delete unlockedStories[storySlug];
           localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
         }
@@ -65,7 +64,10 @@ export function ChapterScreen({
     } catch (e) {
       console.error("Local storage error", e);
     }
-    setDismissed(false);
+    setCountdown(null);
+    setClickedAffiliate(false);
+    setCanConfirm(false);
+    setCanSkip(false);
   }, [chapter.id, chapter.isLocked, storySlug]);
 
   // Save reading history when chapter mounts
@@ -83,16 +85,36 @@ export function ChapterScreen({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter.slug]);
 
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCanConfirm(true);
+      setCanSkip(true);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const handleAffiliateClick = () => {
+    setClickedAffiliate(true);
+    setCountdown(15);
+    void trackAffiliateClickBrowser(chapter.id);
+  };
+
   const handleUnlock = () => {
     try {
-      // 1. Mở khóa riêng cho chương này
+      // 1. Mở khóa riêng cho chương này (backwards compatibility)
       const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
       if (!unlockedChapters.includes(chapter.id)) {
         unlockedChapters.push(chapter.id);
         localStorage.setItem("unlocked_chapters", JSON.stringify(unlockedChapters));
       }
-
-      // 2. Mở khóa toàn bộ truyện trong 24 giờ
+      
+      // 2. Mở khóa toàn bộ các chương khác của bộ truyện này trong 7 ngày
       const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
       unlockedStories[storySlug] = Date.now();
       localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
@@ -100,12 +122,6 @@ export function ChapterScreen({
       console.error(e);
     }
     setIsLocked(false);
-  };
-
-  // Click link Shopee → mở khoá ngay lập tức, không cần countdown
-  const handleAffiliateClick = () => {
-    void trackAffiliateClickBrowser(chapter.id);
-    handleUnlock();
   };
 
   return (
@@ -152,40 +168,32 @@ export function ChapterScreen({
             storySlug={storySlug}
             previousSlug={chapter.previousChapter?.slug ?? null}
             nextSlug={chapter.nextChapter?.slug ?? null}
-            allChapters={allChapters}
-            currentChapterSlug={currentChapterSlug ?? chapter.slug}
             position="bottom"
           />
         )}
       </div>
 
-      {/* ── Popup khi LOCKED và chưa bị dismiss ── */}
-      {isLocked && !dismissed && (
+      {/* Beautiful Modal Popup when Locked */}
+      {isLocked && (
         <div className="affiliate-modal-overlay">
           <div className="affiliate-modal-card">
-            {/* Nút X — đóng popup, hiện trang locked-notice */}
-            <button
-              className="affiliate-modal-close-btn"
-              onClick={() => setDismissed(true)}
-              title="Đóng popup"
+            {/* Close Button X at Top Right */}
+            <button 
+              className="affiliate-modal-close-btn" 
+              onClick={() => router.push(`/truyen/${storySlug}`)}
+              title="Quay lại danh sách chương"
             >
               ✕
             </button>
 
-            {/* Title */}
+            {/* Top Text Content */}
             <h3 className="affiliate-modal-title">
               Mời bạn CLICK vào liên kết bên dưới và <span className="highlight-color">Mở Ứng Dụng Shopee</span> để mở khóa toàn bộ chương truyện!
             </h3>
 
             {/* Shopee Link */}
             <div className="affiliate-modal-link-container">
-              👉 <a
-                href={chapter.affiliateLink || "https://shopee.vn"}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleAffiliateClick}
-                className="affiliate-modal-link"
-              >
+              👉 <a href={chapter.affiliateLink || "https://shopee.vn"} target="_blank" rel="noopener noreferrer" onClick={handleAffiliateClick} className="affiliate-modal-link">
                 {chapter.affiliateLink || "https://shopee.vn"}
               </a>
             </div>
@@ -194,56 +202,65 @@ export function ChapterScreen({
             {chapter.affiliateImage && (
               <div className="affiliate-modal-image-wrapper">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={chapter.affiliateImage}
-                  alt="Sản phẩm Shopee"
+                <img 
+                  src={chapter.affiliateImage} 
+                  alt="Sản phẩm Shopee" 
                   className="affiliate-modal-image"
                 />
               </div>
             )}
 
-            {/* CTA — click vào Shopee mở khoá ngay, không cần đợi */}
+            {/* Countdown / Unlock Action Area */}
             <div className="affiliate-modal-action-area">
-              <a
-                href={chapter.affiliateLink || "https://shopee.vn"}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleAffiliateClick}
-                className="affiliate-modal-btn affiliate-modal-btn--shopee"
-              >
-                🛒 Mở Ứng Dụng Shopee &amp; Mở Khóa
-              </a>
+              {!clickedAffiliate ? (
+                <a
+                  href={chapter.affiliateLink || "https://shopee.vn"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleAffiliateClick}
+                  className="affiliate-modal-btn affiliate-modal-btn--shopee"
+                >
+                  🛒 Mở Ứng Dụng Shopee & Mở Khóa
+                </a>
+              ) : (
+                <>
+                  {countdown !== null && countdown > 0 ? (
+                    <div className="affiliate-modal-countdown">
+                      ⏳ Đang xác nhận chuyển hướng... Vui lòng đợi {countdown}s
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleUnlock}
+                      className="affiliate-modal-btn affiliate-modal-btn--unlock"
+                    >
+                      ✅ Xác nhận mở khóa chương
+                    </button>
+                  )}
+
+                  {canSkip && (
+                    <button
+                      type="button"
+                      onClick={handleUnlock}
+                      className="affiliate-modal-skip-btn"
+                    >
+                      Bỏ qua quảng cáo và đọc trực tiếp
+                    </button>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Note */}
+            {/* Warning Note */}
             <p className="affiliate-modal-note">
-              Lưu ý: Khi bấm mở khóa, toàn bộ chương của truyện sẽ được mở khóa đọc tự do trong 24 giờ. Rất mong Quý độc giả ủng hộ.
+              Lưu ý: Khi bấm mở khóa, toàn bộ chương của truyện sẽ được mở khóa đọc tự do trong 7 ngày. Rất mong Quý độc giả ủng hộ.
             </p>
 
-            {/* Footer */}
+            {/* Footer Thank You */}
             <div className="affiliate-modal-footer">
-              Nàng Thơ và đội ngũ Editor xin chân thành cảm ơn!
+              Xó Truyện và đội ngũ Editor xin chân thành cảm ơn!
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Trang locked-notice khi user đã nhấn X ── */}
-      {isLocked && dismissed && (
-        <div className="chapter-locked-notice">
-          <div className="chapter-locked-notice__icon">🔒</div>
-          <h2 className="chapter-locked-notice__title">Chương này đã bị khoá</h2>
-          <p className="chapter-locked-notice__desc">
-            Bạn vui lòng ấn vào link Shopee trên Popup để mở khoá nội dung.
-            <br />
-            Lỡ ấn ✕ thì chỉ cần tải lại trang là hiện popup ngay.
-          </p>
-          <button
-            className="chapter-locked-notice__reopen-btn"
-            onClick={() => setDismissed(false)}
-          >
-            🛒 Mở popup Shopee lại
-          </button>
         </div>
       )}
 

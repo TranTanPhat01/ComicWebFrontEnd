@@ -7,7 +7,6 @@ import { ChapterScreen } from "@/features/public-chapters/components/chapter-scr
 import { env } from "@/lib/env";
 import { DEMO_STORIES } from "@/features/public-stories/demo/demo-stories";
 import type { PublicChapterDetailDto } from "@/features/public-chapters/types/public-chapter.types";
-import type { PublicStoryDetailDto } from "@/features/public-stories/types/public-story.types";
 import type { ApiResponse } from "@/lib/api/api-response";
 import type { ChapterSlugParam } from "@/constants/routes";
 import { parseEnvelopeData } from "@/lib/api/parse-envelope";
@@ -127,13 +126,13 @@ const getCachedPublicChapter = cache(async (
 });
 
 /**
- * Cached function to fetch the story details including chapters for dropdown.
+ * Cached function to fetch the story details.
  */
 const getCachedStory = cache(async (storySlug: string) => {
   const response = await getPublicStoryBySlug(storySlug);
 
   if (response.success && response.data) {
-    const unwrapped = parseEnvelopeData<PublicStoryDetailDto>(response.data);
+    const unwrapped = parseEnvelopeData<{ title: string }>(response.data);
     if (unwrapped) {
       return {
         ...response,
@@ -150,14 +149,7 @@ const getCachedStory = cache(async (storySlug: string) => {
         status: 200,
         data: {
           title: demo.title,
-          chapters: Array.from({ length: demo.chapterCount }, (_, i) => ({
-            id: i + 1,
-            slug: `chuong-${i + 1}`,
-            number: i + 1,
-            title: `Chương ${i + 1}`,
-            publishedAt: null,
-          })),
-        } as unknown as PublicStoryDetailDto,
+        },
       };
     }
   }
@@ -221,23 +213,15 @@ export default async function chapterPage({ params }: ChapterPageProps) {
     notFound();
   }
 
-  // Retrieve story details for title + chapters dropdown
+  // Retrieve story details for title/header
   const storyResponse = await getCachedStory(storySlug);
-  const storyData = storyResponse.success ? storyResponse.data : null;
-  const storyTitle = storyData?.title ?? "Truyện";
-  const allChapters = storyData?.chapters?.map((c) => ({
-    slug: c.slug,
-    number: c.number,
-    title: c.title ?? "",
-  })) ?? [];
+  const storyTitle = storyResponse.success ? storyResponse.data.title : "Truyện";
 
   return (
     <ChapterScreen
       chapter={chapterResponse.data}
       storySlug={storySlug}
       storyTitle={storyTitle}
-      allChapters={allChapters}
-      currentChapterSlug={chapterSlug}
     />
   );
 }
