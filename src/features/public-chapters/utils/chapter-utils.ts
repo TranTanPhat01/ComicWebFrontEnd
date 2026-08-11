@@ -15,7 +15,7 @@ export function getCleanChapterTitle(number: number, title?: string | null): str
   // Matches "Chương <number>", "chuong <number>", "CHƯƠNG <number>"
   // with possible decimal suffix like 1.5, letter suffix like 1a,
   // and trailing colons, hyphens, spaces, or dashes.
-  const prefixRegex = /^(ch[ưu]ong\s+\d+(\.\d+)?([a-zA-Z])?[\s-:]*)/i;
+  const prefixRegex = /^(ch[uư][oơ]ng\s+\d+(\.\d+)?([a-zA-Z])?[\s-:]*)/i;
 
   if (prefixRegex.test(cleanTitle)) {
     const stripped = cleanTitle.replace(prefixRegex, "").trim();
