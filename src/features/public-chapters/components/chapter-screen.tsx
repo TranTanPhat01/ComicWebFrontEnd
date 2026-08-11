@@ -35,8 +35,13 @@ export function ChapterScreen({
   // Check localStorage on mount/change
   useEffect(() => {
     try {
-      const unlocked = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
-      if (unlocked.includes(chapter.id)) {
+      const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories") || "[]");
+      
+      const isChapterUnlocked = unlockedChapters.includes(chapter.id);
+      const isStoryUnlocked = unlockedStories.includes(storySlug);
+
+      if (isChapterUnlocked || isStoryUnlocked) {
         setIsLocked(false);
       } else {
         setIsLocked(chapter.isLocked);
@@ -48,7 +53,7 @@ export function ChapterScreen({
     setClickedAffiliate(false);
     setCanConfirm(false);
     setCanSkip(false);
-  }, [chapter.id, chapter.isLocked]);
+  }, [chapter.id, chapter.isLocked, storySlug]);
 
   // Save reading history when chapter mounts
   useEffect(() => {
@@ -87,10 +92,18 @@ export function ChapterScreen({
 
   const handleUnlock = () => {
     try {
-      const unlocked = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
-      if (!unlocked.includes(chapter.id)) {
-        unlocked.push(chapter.id);
-        localStorage.setItem("unlocked_chapters", JSON.stringify(unlocked));
+      // 1. Mở khóa riêng cho chương này (backwards compatibility)
+      const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
+      if (!unlockedChapters.includes(chapter.id)) {
+        unlockedChapters.push(chapter.id);
+        localStorage.setItem("unlocked_chapters", JSON.stringify(unlockedChapters));
+      }
+      
+      // 2. Mở khóa toàn bộ các chương khác của bộ truyện này (storySlug)
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories") || "[]");
+      if (!unlockedStories.includes(storySlug)) {
+        unlockedStories.push(storySlug);
+        localStorage.setItem("unlocked_stories", JSON.stringify(unlockedStories));
       }
     } catch (e) {
       console.error(e);

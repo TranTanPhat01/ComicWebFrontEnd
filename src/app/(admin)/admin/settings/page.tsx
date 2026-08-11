@@ -16,6 +16,7 @@ export default function AdminSettingsPage() {
   const [headScripts, setHeadScripts] = useState("");
   const [bodyScripts, setBodyScripts] = useState("");
   const [metaTags, setMetaTags] = useState("");
+  const [globalAffiliateLink, setGlobalAffiliateLink] = useState("");
 
   useEffect(() => {
     async function loadSettings() {
@@ -34,6 +35,9 @@ export default function AdminSettingsPage() {
 
         const metaItem = res.data.find(x => x.key === "CustomMetaTags");
         if (metaItem) setMetaTags(metaItem.value);
+
+        const affiliateItem = res.data.find(x => x.key === "GlobalAffiliateLink");
+        if (affiliateItem) setGlobalAffiliateLink(affiliateItem.value);
       } else {
         setError(res.error.message || "Không thể tải cấu hình hệ thống.");
       }
@@ -51,7 +55,8 @@ export default function AdminSettingsPage() {
     const payload: SettingItemDto[] = [
       { key: "GlobalHeadScripts", value: headScripts, description: "Mã script chèn vào thẻ HEAD (ví dụ: Google Analytics, Facebook Pixel)." },
       { key: "GlobalBodyScripts", value: bodyScripts, description: "Mã script chèn vào thẻ BODY (ví dụ: các chat widget, scripts theo dõi)." },
-      { key: "CustomMetaTags", value: metaTags, description: "Các thẻ meta tuỳ chỉnh (ví dụ: xác thực webmaster tools, custom OpenGraph tags)." }
+      { key: "CustomMetaTags", value: metaTags, description: "Các thẻ meta tuỳ chỉnh (ví dụ: xác thực webmaster tools, custom OpenGraph tags)." },
+      { key: "GlobalAffiliateLink", value: globalAffiliateLink, description: "Link Shopee mặc định dùng để hiển thị popup mở khóa cho các chương truyện (áp dụng từ chương 2 trở đi)." }
     ];
 
     const res = await saveAdminSettingsBrowser(payload);
@@ -133,7 +138,20 @@ export default function AdminSettingsPage() {
               <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Các thẻ meta tùy chỉnh dùng để xác thực quyền sở hữu website với Google Search Console, Bing Webmaster tools.</span>
             </label>
 
-            <div className="admin-modal__actions" style={{ marginTop: "1rem", justifyContent: "flex-start" }}>
+            <label className="admin-form__field admin-form__field--full">
+              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Link Shopee Mặc Định (Global Affiliate Link)</span>
+              <input
+                type="text"
+                className="input"
+                value={globalAffiliateLink}
+                onChange={(e) => setGlobalAffiliateLink(e.target.value)}
+                placeholder="https://shopee.vn/..."
+                style={{ fontSize: "0.9rem" }}
+              />
+              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Link Shopee mặc định sẽ hiển thị làm popup mở khóa từ chương 2 của mọi truyện (nếu chương đó chưa có link riêng).</span>
+            </label>
+
+            <div className="admin-modal__actions" style={{ marginTop: "1.5rem", justifyContent: "flex-start" }}>
               <button className="btn btn--primary" type="submit" disabled={saving}>
                 {saving ? "Đang lưu cấu hình..." : "Lưu cấu hình hệ thống"}
               </button>
