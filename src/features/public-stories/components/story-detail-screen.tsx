@@ -4,7 +4,7 @@ import { ErrorState } from "@/components/feedback/error-state";
 import { StoryDetailHero } from "./story-detail-hero";
 import { StoryDescription } from "./story-description";
 import { StoryInfoSidebar } from "./story-info-sidebar";
-import { CommentSection } from "./comment-section";
+
 import { ChapterList } from "@/features/public-chapters/components/chapter-list";
 import { env } from "@/lib/env";
 import type { PublicStoryDetailDto } from "../types/public-story.types";
@@ -151,10 +151,7 @@ export function StoryDetailScreen({
         </aside>
       </div>
 
-      {/* Story Comments Section */}
-      <div className="container" style={{ marginTop: "var(--space-6)", marginBottom: "var(--space-12)" }}>
-        <CommentSection storyId={story.id} />
-      </div>
+
     </div>
   );
 }
