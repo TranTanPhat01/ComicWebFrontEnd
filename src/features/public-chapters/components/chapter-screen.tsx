@@ -36,10 +36,23 @@ export function ChapterScreen({
   useEffect(() => {
     try {
       const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
-      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories") || "[]");
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
       
       const isChapterUnlocked = unlockedChapters.includes(chapter.id);
-      const isStoryUnlocked = unlockedStories.includes(storySlug);
+      
+      let isStoryUnlocked = false;
+      const unlockTime = unlockedStories[storySlug];
+      if (unlockTime) {
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+        const isExpired = Date.now() - unlockTime > SEVEN_DAYS_MS;
+        if (!isExpired) {
+          isStoryUnlocked = true;
+        } else {
+          // Clean up expired entry
+          delete unlockedStories[storySlug];
+          localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
+        }
+      }
 
       if (isChapterUnlocked || isStoryUnlocked) {
         setIsLocked(false);
@@ -99,12 +112,10 @@ export function ChapterScreen({
         localStorage.setItem("unlocked_chapters", JSON.stringify(unlockedChapters));
       }
       
-      // 2. Mở khóa toàn bộ các chương khác của bộ truyện này (storySlug)
-      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories") || "[]");
-      if (!unlockedStories.includes(storySlug)) {
-        unlockedStories.push(storySlug);
-        localStorage.setItem("unlocked_stories", JSON.stringify(unlockedStories));
-      }
+      // 2. Mở khóa toàn bộ các chương khác của bộ truyện này trong 7 ngày
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
+      unlockedStories[storySlug] = Date.now();
+      localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
     } catch (e) {
       console.error(e);
     }
