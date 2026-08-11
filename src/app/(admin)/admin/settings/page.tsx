@@ -11,7 +11,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  
+
   // Tab quản lý cấu hình
   const [activeTab, setActiveTab] = useState<"ads" | "scripts">("ads");
 
@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
           ? settingsData
           : (settingsData as any)?.data || [];
         setSettings(settingsArray);
-        
+
         // Map các giá trị vào state tương ứng
         const headItem = settingsArray.find((x: any) => x.key === "GlobalHeadScripts");
         if (headItem) setHeadScripts(headItem.value);
@@ -113,15 +113,15 @@ export default function AdminSettingsPage() {
 
           {error && <p className="admin-form__error" style={{ marginBottom: "1.5rem" }}>{error}</p>}
           {successMsg && (
-            <p 
-              className="admin-form__success" 
-              style={{ 
-                marginBottom: "1.5rem", 
-                color: "#22c55e", 
-                backgroundColor: "rgba(34, 197, 94, 0.1)", 
-                padding: "1rem", 
-                borderRadius: "var(--radius-lg)", 
-                fontWeight: "bold" 
+            <p
+              className="admin-form__success"
+              style={{
+                marginBottom: "1.5rem",
+                color: "#22c55e",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                padding: "1rem",
+                borderRadius: "var(--radius-lg)",
+                fontWeight: "bold"
               }}
             >
               {successMsg}
@@ -134,7 +134,7 @@ export default function AdminSettingsPage() {
               {activeTab === "ads" ? (
                 <div>
                   <h3 className="settings-card__title">🛒 Thiết lập Popup Shopee Mở Khóa</h3>
-                  
+
                   <div className="settings-field-group">
                     <label className="settings-label">
                       <span className="settings-label__text">Link Shopee Mặc Định (Global Affiliate Link)</span>
@@ -168,52 +168,91 @@ export default function AdminSettingsPage() {
               ) : (
                 <div>
                   <h3 className="settings-card__title">🌐 Nhúng Mã Theo Dõi & SEO</h3>
-                  
+
                   <div className="settings-field-group">
-                    <label className="settings-label">
+                    <div className="settings-label">
                       <span className="settings-label__text">Nhúng mã vào HEAD Script (Google Analytics, Facebook Pixel,...)</span>
-                      <textarea
-                        className="settings-textarea"
-                        rows={5}
-                        value={headScripts}
-                        onChange={(e) => setHeadScripts(e.target.value)}
-                        placeholder="<!-- Paste Google Analytics hoặc Facebook Pixel tracking code vào đây -->"
-                      />
                       <span className="settings-label__desc">Mã này sẽ tự động được inject vào thẻ &lt;head&gt; ngoài trang public của website.</span>
-                    </label>
+                      
+                      <div className="code-editor-mockup">
+                        <div className="code-editor-header">
+                          <div className="code-editor-dots">
+                            <span className="code-editor-dot code-editor-dot--red" />
+                            <span className="code-editor-dot code-editor-dot--yellow" />
+                            <span className="code-editor-dot code-editor-dot--green" />
+                          </div>
+                          <div className="code-editor-filename">
+                            📄 global-head-scripts.html
+                          </div>
+                        </div>
+                        <textarea
+                          className="code-editor-textarea"
+                          rows={6}
+                          value={headScripts}
+                          onChange={(e) => setHeadScripts(e.target.value)}
+                          placeholder="<!-- Paste Google Analytics hoặc Facebook Pixel tracking code vào đây -->"
+                        />
+                      </div>
+                    </div>
 
-                    <label className="settings-label" style={{ marginTop: "1rem" }}>
+                    <div className="settings-label" style={{ marginTop: "1rem" }}>
                       <span className="settings-label__text">Nhúng mã vào BODY Script (Ví dụ: Facebook Chat, Tawk.to,...)</span>
-                      <textarea
-                        className="settings-textarea"
-                        rows={5}
-                        value={bodyScripts}
-                        onChange={(e) => setBodyScripts(e.target.value)}
-                        placeholder="<!-- Paste chat widget script hoặc các body scripts khác vào đây -->"
-                      />
                       <span className="settings-label__desc">Mã này sẽ tự động được inject vào phần cuối thẻ &lt;body&gt; ngoài trang public.</span>
-                    </label>
 
-                    <label className="settings-label" style={{ marginTop: "1rem" }}>
+                      <div className="code-editor-mockup">
+                        <div className="code-editor-header">
+                          <div className="code-editor-dots">
+                            <span className="code-editor-dot code-editor-dot--red" />
+                            <span className="code-editor-dot code-editor-dot--yellow" />
+                            <span className="code-editor-dot code-editor-dot--green" />
+                          </div>
+                          <div className="code-editor-filename">
+                            📄 global-body-scripts.html
+                          </div>
+                        </div>
+                        <textarea
+                          className="code-editor-textarea"
+                          rows={6}
+                          value={bodyScripts}
+                          onChange={(e) => setBodyScripts(e.target.value)}
+                          placeholder="<!-- Paste chat widget script hoặc các body scripts khác vào đây -->"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-label" style={{ marginTop: "1rem" }}>
                       <span className="settings-label__text">Thẻ Meta HTML Tùy Chỉnh (Custom Meta Tags)</span>
-                      <textarea
-                        className="settings-textarea"
-                        rows={4}
-                        value={metaTags}
-                        onChange={(e) => setMetaTags(e.target.value)}
-                        placeholder='<meta name="google-site-verification" content="XYZ" />'
-                      />
                       <span className="settings-label__desc">Dùng để xác thực quyền sở hữu website với Google Search Console, Bing Webmaster tools.</span>
-                    </label>
+
+                      <div className="code-editor-mockup">
+                        <div className="code-editor-header">
+                          <div className="code-editor-dots">
+                            <span className="code-editor-dot code-editor-dot--red" />
+                            <span className="code-editor-dot code-editor-dot--yellow" />
+                            <span className="code-editor-dot code-editor-dot--green" />
+                          </div>
+                          <div className="code-editor-filename">
+                            📄 custom-meta-tags.html
+                          </div>
+                        </div>
+                        <textarea
+                          className="code-editor-textarea"
+                          rows={5}
+                          value={metaTags}
+                          onChange={(e) => setMetaTags(e.target.value)}
+                          placeholder='<meta name="google-site-verification" content="XYZ" />'
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Action Button */}
               <div style={{ marginTop: "2rem", borderTop: "1px solid var(--color-border)", paddingTop: "1.5rem" }}>
-                <button 
-                  className="btn btn--primary" 
-                  type="submit" 
+                <button
+                  className="btn btn--primary"
+                  type="submit"
                   disabled={saving}
                   style={{
                     padding: "0.85rem 2rem",
@@ -237,7 +276,7 @@ export default function AdminSettingsPage() {
                   <div className="preview-header">
                     👁️ TRỰC QUAN POPUP TRÊN TRANG ĐỌC
                   </div>
-                  
+
                   <div className="preview-mockup-popup">
                     {/* Mock Close Button */}
                     <div style={{ alignSelf: "flex-end", cursor: "not-allowed", color: "#94a3b8", fontSize: "0.9rem", marginTop: "-0.5rem", marginBottom: "0.5rem" }}>
@@ -254,9 +293,9 @@ export default function AdminSettingsPage() {
 
                     {globalAffiliateImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img 
-                        src={globalAffiliateImage} 
-                        alt="Ảnh sản phẩm demo" 
+                      <img
+                        src={globalAffiliateImage}
+                        alt="Ảnh sản phẩm demo"
                         className="preview-mockup-image"
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
@@ -277,7 +316,7 @@ export default function AdminSettingsPage() {
                     </p>
 
                     <div className="preview-mockup-footer">
-                      Xó Truyện và đội ngũ Editor xin chân thành cảm ơn!
+                      ComicWeb Truyện và đội ngũ Editor xin chân thành cảm ơn!
                     </div>
                   </div>
                 </div>

@@ -7266,6 +7266,72 @@ html.light .hero-nav-arrow:hover {
   margin-top: 0.5rem;
 }
 
+/* Code Editor Mockup for Admin Panel */
+.code-editor-mockup {
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  background-color: #0f172a;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  margin-top: 0.5rem;
+}
+
+.code-editor-header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code-editor-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.code-editor-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.code-editor-dot--red { background-color: #ef4444; }
+.code-editor-dot--yellow { background-color: #f59e0b; }
+.code-editor-dot--green { background-color: #10b981; }
+
+.code-editor-filename {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.code-editor-textarea {
+  width: 100%;
+  background-color: #0f172a;
+  color: #38bdf8; /* Sleek blue-cyan code color */
+  border: none;
+  padding: 1rem;
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.code-editor-textarea:focus {
+  outline: none;
+}
+
+.code-editor-textarea::placeholder {
+  color: #475569;
+  font-style: italic;
+}
+
 /* ── Shopee Affiliate Modal Popup ── */
 .affiliate-modal-overlay {
   position: fixed;
