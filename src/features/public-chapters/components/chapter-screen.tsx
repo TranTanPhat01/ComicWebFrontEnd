@@ -10,6 +10,7 @@ import { ReadingProgress } from "./reading-progress";
 import { BackToTopButton } from "./back-to-top-button";
 import { useReadingHistory } from "../hooks/use-reading-history";
 import type { PublicChapterDetailDto } from "../types/public-chapter.types";
+import { useRouter } from "next/navigation";
 import { trackAffiliateClickBrowser } from "../api/public-chapters-browser.api";
 
 interface ChapterScreenProps {
@@ -25,6 +26,7 @@ export function ChapterScreen({
   storyTitle,
   coverUrl,
 }: ChapterScreenProps) {
+  const router = useRouter();
   const { saveEntry } = useReadingHistory();
   const [isLocked, setIsLocked] = useState(chapter.isLocked);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -150,135 +152,10 @@ export function ChapterScreen({
         {/* Main Text Content Article */}
         <div className="chapter-reader-screen__content-wrapper">
           {isLocked ? (
-            <div
-              className="chapter-lock-card"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                padding: "3.5rem 2rem",
-                margin: "3rem auto",
-                maxWidth: "640px",
-                backgroundColor: "rgba(30, 41, 59, 0.75)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "var(--radius-lg)",
-                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
-                backdropFilter: "blur(12px)",
-                color: "#f8fafc",
-              }}
-            >
-              <div
-                className="chapter-lock-card__icon"
-                style={{
-                  fontSize: "4rem",
-                  marginBottom: "1rem",
-                }}
-              >
-                🔒
-              </div>
-              <h2
-                className="chapter-lock-card__title"
-                style={{
-                  fontSize: "1.7rem",
-                  fontWeight: "bold",
-                  marginBottom: "1rem",
-                  color: "#f8fafc",
-                }}
-              >
-                Chương Này Đang Được Khóa
-              </h2>
-              <p
-                className="chapter-lock-card__text"
-                style={{
-                  fontSize: "1rem",
-                  lineHeight: "1.6",
-                  color: "#cbd5e1",
-                  marginBottom: "2rem",
-                  maxWidth: "500px",
-                }}
-              >
-                Để ủng hộ tác giả duy trì dịch truyện, vui lòng click link đặt mua sách giấy Shopee dưới đây để mở khoá trực tiếp chương này.
-              </p>
-
-              {chapter.affiliateLink && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.2rem", width: "100%" }}>
-                  <a
-                    href={chapter.affiliateLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={handleAffiliateClick}
-                    className="btn btn--primary btn--large"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      padding: "1rem 2.2rem",
-                      fontSize: "1.1rem",
-                      fontWeight: "bold",
-                      borderRadius: "9999px",
-                      backgroundColor: "#f97316", // Shopee Orange
-                      color: "#ffffff",
-                      textDecoration: "none",
-                      boxShadow: "0 4px 14px 0 rgba(249, 115, 22, 0.4)",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 6px 20px 0 rgba(249, 115, 22, 0.6)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 14px 0 rgba(249, 115, 22, 0.4)";
-                    }}
-                  >
-                    🛒 Đi Đến Shopee Mua Sách & Mở Khóa
-                  </a>
-
-                  {clickedAffiliate && countdown !== null && countdown > 0 && (
-                    <div style={{ fontSize: "0.95rem", color: "#f97316", fontWeight: "500" }}>
-                      ⏳ Đang xác thực chuyển hướng mua sách... Vui lòng đợi {countdown} giây
-                    </div>
-                  )}
-
-                  {canConfirm && (
-                    <button
-                      type="button"
-                      onClick={handleUnlock}
-                      className="btn btn--secondary"
-                      style={{
-                        padding: "0.8rem 2rem",
-                        borderRadius: "9999px",
-                        fontWeight: "bold",
-                        backgroundColor: "#22c55e",
-                        borderColor: "#22c55e",
-                        color: "#ffffff"
-                      }}
-                    >
-                      ✅ Xác nhận mở khóa chương
-                    </button>
-                  )}
-
-                  {clickedAffiliate && canSkip && (
-                    <button
-                      type="button"
-                      onClick={handleUnlock}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#94a3b8",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        fontSize: "0.85rem",
-                        marginTop: "0.5rem"
-                      }}
-                    >
-                      Bỏ qua quảng cáo và đọc trực tiếp
-                    </button>
-                  )}
-                </div>
-              )}
+            <div className="chapter-content-placeholder" style={{ filter: "blur(12px)", opacity: 0.15, pointerEvents: "none", userSelect: "none", margin: "3rem auto", maxWidth: "800px" }}>
+              <p style={{ fontSize: "1.2rem", marginBottom: "1rem", lineHeight: "1.8" }}>Nội dung chương này đã bị ẩn đi. Vui lòng hoàn thành các bước trong popup để tiếp tục đọc truyện.</p>
+              <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Đường đi dài hơn, những bước chân chậm rãi trên cát bụi thời gian. Nhìn về phía xa xăm, nơi chân trời giao thoa với đại dương...</p>
+              <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Gió thổi qua hàng thông, tiếng xào xạc hòa cùng tiếng sóng biển vỗ rì rào. Một bóng người thầm lặng đứng đợi bóng tối buông xuống...</p>
             </div>
           ) : (
             <ChapterContent content={chapter.content} />
@@ -286,13 +163,106 @@ export function ChapterScreen({
         </div>
 
         {/* Bottom Navigation */}
-        <ChapterNavigation
-          storySlug={storySlug}
-          previousSlug={chapter.previousChapter?.slug ?? null}
-          nextSlug={chapter.nextChapter?.slug ?? null}
-          position="bottom"
-        />
+        {!isLocked && (
+          <ChapterNavigation
+            storySlug={storySlug}
+            previousSlug={chapter.previousChapter?.slug ?? null}
+            nextSlug={chapter.nextChapter?.slug ?? null}
+            position="bottom"
+          />
+        )}
       </div>
+
+      {/* Beautiful Modal Popup when Locked */}
+      {isLocked && (
+        <div className="affiliate-modal-overlay">
+          <div className="affiliate-modal-card">
+            {/* Close Button X at Top Right */}
+            <button 
+              className="affiliate-modal-close-btn" 
+              onClick={() => router.push(`/truyen/${storySlug}`)}
+              title="Quay lại danh sách chương"
+            >
+              ✕
+            </button>
+
+            {/* Top Text Content */}
+            <h3 className="affiliate-modal-title">
+              Mời bạn CLICK vào liên kết bên dưới và <span className="highlight-color">Mở Ứng Dụng Shopee</span> để mở khóa toàn bộ chương truyện!
+            </h3>
+
+            {/* Shopee Link */}
+            <div className="affiliate-modal-link-container">
+              👉 <a href={chapter.affiliateLink || "https://shopee.vn"} target="_blank" rel="noopener noreferrer" onClick={handleAffiliateClick} className="affiliate-modal-link">
+                {chapter.affiliateLink || "https://shopee.vn"}
+              </a>
+            </div>
+
+            {/* Product Image */}
+            {chapter.affiliateImage && (
+              <div className="affiliate-modal-image-wrapper">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={chapter.affiliateImage} 
+                  alt="Sản phẩm Shopee" 
+                  className="affiliate-modal-image"
+                />
+              </div>
+            )}
+
+            {/* Countdown / Unlock Action Area */}
+            <div className="affiliate-modal-action-area">
+              {!clickedAffiliate ? (
+                <a
+                  href={chapter.affiliateLink || "https://shopee.vn"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleAffiliateClick}
+                  className="affiliate-modal-btn affiliate-modal-btn--shopee"
+                >
+                  🛒 Mở Ứng Dụng Shopee & Mở Khóa
+                </a>
+              ) : (
+                <>
+                  {countdown !== null && countdown > 0 ? (
+                    <div className="affiliate-modal-countdown">
+                      ⏳ Đang xác nhận chuyển hướng... Vui lòng đợi {countdown}s
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleUnlock}
+                      className="affiliate-modal-btn affiliate-modal-btn--unlock"
+                    >
+                      ✅ Xác nhận mở khóa chương
+                    </button>
+                  )}
+
+                  {canSkip && (
+                    <button
+                      type="button"
+                      onClick={handleUnlock}
+                      className="affiliate-modal-skip-btn"
+                    >
+                      Bỏ qua quảng cáo và đọc trực tiếp
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Warning Note */}
+            <p className="affiliate-modal-note">
+              Lưu ý: Khi bấm mở khóa, toàn bộ chương của truyện sẽ được mở khóa đọc tự do trong 7 ngày. Rất mong Quý độc giả ủng hộ.
+            </p>
+
+            {/* Footer Thank You */}
+            <div className="affiliate-modal-footer">
+              Xó Truyện và đội ngũ Editor xin chân thành cảm ơn!
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Back To Top Action */}
       <BackToTopButton />

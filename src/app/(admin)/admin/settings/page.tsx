@@ -17,6 +17,7 @@ export default function AdminSettingsPage() {
   const [bodyScripts, setBodyScripts] = useState("");
   const [metaTags, setMetaTags] = useState("");
   const [globalAffiliateLink, setGlobalAffiliateLink] = useState("");
+  const [globalAffiliateImage, setGlobalAffiliateImage] = useState("");
 
   useEffect(() => {
     async function loadSettings() {
@@ -38,6 +39,9 @@ export default function AdminSettingsPage() {
 
         const affiliateItem = res.data.find(x => x.key === "GlobalAffiliateLink");
         if (affiliateItem) setGlobalAffiliateLink(affiliateItem.value);
+
+        const affiliateImageItem = res.data.find(x => x.key === "GlobalAffiliateImage");
+        if (affiliateImageItem) setGlobalAffiliateImage(affiliateImageItem.value);
       } else {
         setError(res.error.message || "Không thể tải cấu hình hệ thống.");
       }
@@ -56,7 +60,8 @@ export default function AdminSettingsPage() {
       { key: "GlobalHeadScripts", value: headScripts, description: "Mã script chèn vào thẻ HEAD (ví dụ: Google Analytics, Facebook Pixel)." },
       { key: "GlobalBodyScripts", value: bodyScripts, description: "Mã script chèn vào thẻ BODY (ví dụ: các chat widget, scripts theo dõi)." },
       { key: "CustomMetaTags", value: metaTags, description: "Các thẻ meta tuỳ chỉnh (ví dụ: xác thực webmaster tools, custom OpenGraph tags)." },
-      { key: "GlobalAffiliateLink", value: globalAffiliateLink, description: "Link Shopee mặc định dùng để hiển thị popup mở khóa cho các chương truyện (áp dụng từ chương 2 trở đi)." }
+      { key: "GlobalAffiliateLink", value: globalAffiliateLink, description: "Link Shopee mặc định dùng để hiển thị popup mở khóa cho các chương truyện (áp dụng từ chương 2 trở đi)." },
+      { key: "GlobalAffiliateImage", value: globalAffiliateImage, description: "Link ảnh sản phẩm Shopee mặc định dùng để hiển thị trên popup mở khóa." }
     ];
 
     const res = await saveAdminSettingsBrowser(payload);
@@ -149,6 +154,19 @@ export default function AdminSettingsPage() {
                 style={{ fontSize: "0.9rem" }}
               />
               <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Link Shopee mặc định sẽ hiển thị làm popup mở khóa từ chương 2 của mọi truyện (nếu chương đó chưa có link riêng).</span>
+            </label>
+
+            <label className="admin-form__field admin-form__field--full">
+              <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Ảnh Sản Phẩm Mặc Định (Global Affiliate Image URL)</span>
+              <input
+                type="text"
+                className="input"
+                value={globalAffiliateImage}
+                onChange={(e) => setGlobalAffiliateImage(e.target.value)}
+                placeholder="https://..."
+                style={{ fontSize: "0.9rem" }}
+              />
+              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Đường dẫn (URL) ảnh sản phẩm Shopee sẽ được hiển thị ở phần trung tâm của popup mở khóa (Ví dụ: ảnh gói giấy ăn, ảnh cuốn truyện,...).</span>
             </label>
 
             <div className="admin-modal__actions" style={{ marginTop: "1.5rem", justifyContent: "flex-start" }}>

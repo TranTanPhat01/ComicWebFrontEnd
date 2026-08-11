@@ -54,4 +54,5 @@ export interface PublicChapterDetailDto {
   /** Shopee lock monetization fields */
   isLocked?: boolean;
   affiliateLink?: string | null;
+  affiliateImage?: string | null;
 }
