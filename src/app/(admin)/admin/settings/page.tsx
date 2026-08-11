@@ -25,22 +25,26 @@ export default function AdminSettingsPage() {
       setError(null);
       const res = await getAdminSettingsBrowser();
       if (res.success) {
-        setSettings(res.data);
+        const settingsData = res.data;
+        const settingsArray = Array.isArray(settingsData)
+          ? settingsData
+          : (settingsData as any)?.data || [];
+        setSettings(settingsArray);
         
         // Map các giá trị vào state tương ứng
-        const headItem = res.data.find(x => x.key === "GlobalHeadScripts");
+        const headItem = settingsArray.find((x: any) => x.key === "GlobalHeadScripts");
         if (headItem) setHeadScripts(headItem.value);
 
-        const bodyItem = res.data.find(x => x.key === "GlobalBodyScripts");
+        const bodyItem = settingsArray.find((x: any) => x.key === "GlobalBodyScripts");
         if (bodyItem) setBodyScripts(bodyItem.value);
 
-        const metaItem = res.data.find(x => x.key === "CustomMetaTags");
+        const metaItem = settingsArray.find((x: any) => x.key === "CustomMetaTags");
         if (metaItem) setMetaTags(metaItem.value);
 
-        const affiliateItem = res.data.find(x => x.key === "GlobalAffiliateLink");
+        const affiliateItem = settingsArray.find((x: any) => x.key === "GlobalAffiliateLink");
         if (affiliateItem) setGlobalAffiliateLink(affiliateItem.value);
 
-        const affiliateImageItem = res.data.find(x => x.key === "GlobalAffiliateImage");
+        const affiliateImageItem = settingsArray.find((x: any) => x.key === "GlobalAffiliateImage");
         if (affiliateImageItem) setGlobalAffiliateImage(affiliateImageItem.value);
       } else {
         setError(res.error.message || "Không thể tải cấu hình hệ thống.");

@@ -14,9 +14,14 @@ export function DynamicScripts() {
         const res = await getPublicSettingsBrowser();
         if (!res.success || !res.data) return;
 
-        const headScripts = res.data.find(x => x.key === "GlobalHeadScripts")?.value || "";
-        const bodyScripts = res.data.find(x => x.key === "GlobalBodyScripts")?.value || "";
-        const metaTags = res.data.find(x => x.key === "CustomMetaTags")?.value || "";
+        const settingsData = res.data;
+        const settingsArray = Array.isArray(settingsData)
+          ? settingsData
+          : (settingsData as any)?.data || [];
+
+        const headScripts = settingsArray.find((x: any) => x.key === "GlobalHeadScripts")?.value || "";
+        const bodyScripts = settingsArray.find((x: any) => x.key === "GlobalBodyScripts")?.value || "";
+        const metaTags = settingsArray.find((x: any) => x.key === "CustomMetaTags")?.value || "";
 
         // Helper: Inject HTML string vào head
         if (headScripts.trim()) {
