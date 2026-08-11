@@ -35,7 +35,13 @@ export interface BrowserRequestOptions {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 function getBaseUrl(path: string): string {
-  if (path.startsWith("/api/admin") || path.startsWith("/api/v1/admin")) {
+  // These paths are proxied through Next.js server routes so the server can
+  // attach the HttpOnly auth cookie as a Bearer token.
+  if (
+    path.startsWith("/api/admin") ||
+    path.startsWith("/api/v1/admin") ||
+    path.startsWith("/api/v1/me")
+  ) {
     return "";
   }
   return API_BASE_URL;
