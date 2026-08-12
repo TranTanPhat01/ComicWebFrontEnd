@@ -39,28 +39,42 @@ export function ChapterScreen({
   // Check localStorage on mount/chapter change
   useEffect(() => {
     try {
-      // 1. Check chapter-specific unlock with 24-hour expiration
+      // 1. Kiểm tra xem truyện này (storySlug) đã được mở khóa 24h chưa
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
+      let isStoryUnlocked = false;
+      const storyUnlockTime = unlockedStories[storySlug];
+      if (storyUnlockTime) {
+        const isExpired = Date.now() - storyUnlockTime > ONE_DAY_MS;
+        if (!isExpired) {
+          isStoryUnlocked = true;
+        } else {
+          delete unlockedStories[storySlug];
+          localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
+        }
+      }
+
+      // 2. Kiểm tra xem chương này đã được mở khóa riêng lẻ chưa
+      const unlockKey = `${storySlug}:${chapter.slug}`;
       const unlockedChaptersExpiry = JSON.parse(localStorage.getItem("unlocked_chapters_expiry") || "{}");
       let isChapterUnlocked = false;
-      const unlockTime = unlockedChaptersExpiry[chapter.id];
-      if (unlockTime) {
-        const isExpired = Date.now() - unlockTime > ONE_DAY_MS;
+      const chapterUnlockTime = unlockedChaptersExpiry[unlockKey];
+      if (chapterUnlockTime) {
+        const isExpired = Date.now() - chapterUnlockTime > ONE_DAY_MS;
         if (!isExpired) {
           isChapterUnlocked = true;
         } else {
-          // Clean up expired entry
-          delete unlockedChaptersExpiry[chapter.id];
+          delete unlockedChaptersExpiry[unlockKey];
           localStorage.setItem("unlocked_chapters_expiry", JSON.stringify(unlockedChaptersExpiry));
         }
       }
 
-      // 2. Fallback check for legacy non-expiring unlocked chapters
+      // 3. Fallback cho legacy non-expiring chapter ID
       const legacyUnlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
       if (legacyUnlockedChapters.includes(chapter.id)) {
         isChapterUnlocked = true;
       }
 
-      if (isChapterUnlocked) {
+      if (isStoryUnlocked || isChapterUnlocked) {
         setIsLocked(false);
       } else {
         setIsLocked(chapter.isLocked);
@@ -69,7 +83,7 @@ export function ChapterScreen({
       console.error("Local storage error", e);
     }
     setDismissed(false);
-  }, [chapter.id, chapter.isLocked, storySlug]);
+  }, [chapter.id, chapter.slug, chapter.isLocked, storySlug]);
 
   // Save reading history when chapter mounts
   useEffect(() => {
@@ -88,12 +102,19 @@ export function ChapterScreen({
 
   const handleUnlock = () => {
     try {
-      // 1. Mở khóa riêng cho chương này với thời gian hết hạn 24 giờ
+      // 1. Mở khóa toàn bộ truyện này trong 24 giờ
+      const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
+      unlockedStories[storySlug] = Date.now();
+      localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
+
+      // 2. Mở khóa riêng lẻ cho chương này (độc nhất theo slug)
+      const unlockKey = `${storySlug}:${chapter.slug}`;
       const unlockedChaptersExpiry = JSON.parse(localStorage.getItem("unlocked_chapters_expiry") || "{}");
+      unlockedChaptersExpiry[unlockKey] = Date.now();
       unlockedChaptersExpiry[chapter.id] = Date.now();
       localStorage.setItem("unlocked_chapters_expiry", JSON.stringify(unlockedChaptersExpiry));
 
-      // 2. Thêm vào legacy array để tương thích ngược
+      // 3. Legacy array
       const legacyUnlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
       if (!legacyUnlockedChapters.includes(chapter.id)) {
         legacyUnlockedChapters.push(chapter.id);
@@ -220,7 +241,7 @@ export function ChapterScreen({
 
             {/* Note */}
             <p className="affiliate-modal-note">
-              Lưu ý: Khi bấm mở khóa, chương truyện này sẽ được mở khóa đọc tự do trong 24 giờ. Rất mong Quý độc giả ủng hộ.
+              Lưu ý: Khi bấm mở khóa, toàn bộ chương của truyện này sẽ được mở khóa đọc tự do trong 24 giờ. Rất mong Quý độc giả ủng hộ.
             </p>
 
             {/* Footer */}
