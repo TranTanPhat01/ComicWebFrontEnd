@@ -7669,16 +7669,31 @@ html.light .hero-nav-arrow:hover {
 .chapter-locked-notice__title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: inherit;
+  color: #0f172a;
   margin-bottom: 0.75rem;
 }
 
 .chapter-locked-notice__desc {
   font-size: 0.9rem;
-  color: inherit;
-  opacity: 0.8;
+  color: #475569;
   line-height: 1.6;
   margin-bottom: 1.5rem;
+}
+
+/* Sepia theme colors */
+.reader-theme--sepia .chapter-locked-notice__title {
+  color: #432e18;
+}
+.reader-theme--sepia .chapter-locked-notice__desc {
+  color: #5c4326;
+}
+
+/* Dark theme colors */
+.reader-theme--dark .chapter-locked-notice__title {
+  color: #f8fafc;
+}
+.reader-theme--dark .chapter-locked-notice__desc {
+  color: #cbd5e1;
 }
 
 .chapter-locked-notice__reopen-btn {
