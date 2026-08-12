@@ -57,31 +57,27 @@ export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
   const [isPaused, setIsPaused] = useState(false);
 
   // Danh sách các slug truyện nổi bật mặc định cố định
-  const heroStories = React.useMemo(() => {
-    const FEATURED_SLUGS = [
-      "chong-sach-se-dung-giay-tham-dau-cua-thu-ky-toi-sat-phat-quyet-doan",
-      "phieu-an-nam-ngan-te",
-      "bo-la-ma-vuong-sua-chua",
-      "nam-sat-phong-than-nu-chinh-nguoc-van-khong-phuong-boi-nua",
-      "truong-mau-giao-than-nui",
-      "cong-tu-am-ve-cua-ngai-trom-nha-roi"
-    ];
+  const FEATURED_SLUGS = [
+    "chong-sach-se-dung-giay-tham-dau-cua-thu-ky-toi-sat-phat-quyet-doan",
+    "phieu-an-nam-ngan-te",
+    "bo-la-ma-vuong-sua-chua",
+    "nam-sat-phong-than-nu-chinh-nguoc-van-khong-phuong-boi-nua",
+    "truong-mau-giao-than-nui",
+    "cong-tu-am-ve-cua-ngai-trom-nha-roi"
+  ];
 
+  const getFeaturedStories = () => {
     if (!stories) return [];
-    
-    // Chỉ lấy những truyện nằm trong danh sách nổi bật mặc định
     const filtered = stories.filter((s) => FEATURED_SLUGS.includes(s.slug));
-    
-    // Nếu có truyện nổi bật mặc định, sắp xếp đúng thứ tự cấu hình và lấy tối đa 5 truyện
     if (filtered.length > 0) {
       return filtered
         .sort((a, b) => FEATURED_SLUGS.indexOf(a.slug) - FEATURED_SLUGS.indexOf(b.slug))
         .slice(0, 5);
     }
-    
-    // Fallback: nếu không có truyện nào trùng khớp (ví dụ DB rỗng), lấy 5 truyện đầu tiên
     return stories.slice(0, 5);
-  }, [stories]);
+  };
+
+  const heroStories = getFeaturedStories();
 
   const currentStory = heroStories[activeIndex];
   const followed = currentStory ? isBookmarked(currentStory.id) : false;
