@@ -97,7 +97,7 @@ export function ChapterScreen({
       chapterNumber: chapter.number,
       chapterTitle: chapter.title ?? undefined,
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter.slug]);
 
   const handleUnlock = () => {
@@ -160,11 +160,29 @@ export function ChapterScreen({
         {/* Main Text Content Article */}
         <div className="chapter-reader-screen__content-wrapper">
           {isLocked ? (
-            <div className="chapter-content-placeholder" style={{ filter: "blur(12px)", opacity: 0.15, pointerEvents: "none", userSelect: "none", margin: "3rem auto", maxWidth: "800px" }}>
-              <p style={{ fontSize: "1.2rem", marginBottom: "1rem", lineHeight: "1.8" }}>Nội dung chương này đã bị ẩn đi. Vui lòng hoàn thành các bước trong popup để tiếp tục đọc truyện.</p>
-              <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Đường đi dài hơn, những bước chân chậm rãi trên cát bụi thời gian. Nhìn về phía xa xăm, nơi chân trời giao thoa với đại dương...</p>
-              <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Gió thổi qua hàng thông, tiếng xào xạc hòa cùng tiếng sóng biển vỗ rì rào. Một bóng người thầm lặng đứng đợi bóng tối buông xuống...</p>
-            </div>
+            dismissed ? (
+              <div className="chapter-locked-notice">
+                <div className="chapter-locked-notice__icon">🔒</div>
+                <h2 className="chapter-locked-notice__title">Chương này đã bị khoá</h2>
+                <p className="chapter-locked-notice__desc">
+                  Bạn vui lòng ấn vào link Shopee trên Popup để mở khoá nội dung.
+                  <br />
+                  Nếu lỡ ấn ✕, vui lòng tải lại trang hoặc bấm nút dưới đây để hiện lại popup mở khóa.
+                </p>
+                <button
+                  className="chapter-locked-notice__reopen-btn"
+                  onClick={() => setDismissed(false)}
+                >
+                  🛒 Mở popup Shopee lại
+                </button>
+              </div>
+            ) : (
+              <div className="chapter-content-placeholder" style={{ filter: "blur(12px)", opacity: 0.15, pointerEvents: "none", userSelect: "none", margin: "3rem auto", maxWidth: "800px" }}>
+                <p style={{ fontSize: "1.2rem", marginBottom: "1rem", lineHeight: "1.8" }}>Nội dung chương này đã bị ẩn đi. Vui lòng hoàn thành các bước trong popup để tiếp tục đọc truyện.</p>
+                <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Đường đi dài hơn, những bước chân chậm rãi trên cát bụi thời gian. Nhìn về phía xa xăm, nơi chân trời giao thoa với đại dương...</p>
+                <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Gió thổi qua hàng thông, tiếng xào xạc hòa cùng tiếng sóng biển vỗ rì rào. Một bóng người thầm lặng đứng đợi bóng tối buông xuống...</p>
+              </div>
+            )
           ) : (
             <ChapterContent content={chapter.content} />
           )}
@@ -246,30 +264,12 @@ export function ChapterScreen({
 
             {/* Footer */}
             <div className="affiliate-modal-footer">
-              Nàng Thơ và đội ngũ Editor xin chân thành cảm ơn!
+              ComicWeb và đội ngũ Editor xin chân thành cảm ơn!
             </div>
           </div>
         </div>
       )}
 
-      {/* -- Locked-page view when user dismissed popup (pressed X) -- */}
-      {isLocked && dismissed && (
-        <div className="chapter-locked-notice">
-          <div className="chapter-locked-notice__icon">🔒</div>
-          <h2 className="chapter-locked-notice__title">Chương này đã bị khoá</h2>
-          <p className="chapter-locked-notice__desc">
-            Bạn vui lòng ấn vào link Shopee trên Popup để mở khoá nội dung.
-            <br />
-            Lỡ ấn ✕ thì chỉ cần tải lại trang là hiện popup ngay.
-          </p>
-          <button
-            className="chapter-locked-notice__reopen-btn"
-            onClick={() => setDismissed(false)}
-          >
-            🛒 Mở popup Shopee lại
-          </button>
-        </div>
-      )}
 
       {/* Back To Top Action */}
       <BackToTopButton />
