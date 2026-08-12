@@ -233,13 +233,17 @@ export function ChapterScreen({
             </div>
 
             {/* Product Image */}
-            {chapter.affiliateImage && (
+            {chapter.affiliateImage && chapter.affiliateImage.trim() !== "" && (
               <div className="affiliate-modal-image-wrapper">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={chapter.affiliateImage}
                   alt="Sản phẩm Shopee"
                   className="affiliate-modal-image"
+                  onError={(e) => {
+                    // Hide the image container if it fails to load
+                    (e.currentTarget.parentNode as HTMLElement).style.display = 'none';
+                  }}
                 />
               </div>
             )}

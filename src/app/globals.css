@@ -6899,6 +6899,8 @@ html.light .hero-nav-arrow:hover {
   line-height: 1.5;
   color: #0f172a;
   margin-bottom: 1rem;
+  padding-left: 2.25rem;
+  padding-right: 2.25rem;
 }
 
 .affiliate-modal-title .highlight-color {
@@ -7411,6 +7413,8 @@ html.light .hero-nav-arrow:hover {
   line-height: 1.5;
   color: #0f172a;
   margin-bottom: 1rem;
+  padding-left: 2.25rem;
+  padding-right: 2.25rem;
 }
 
 .affiliate-modal-title .highlight-color {
