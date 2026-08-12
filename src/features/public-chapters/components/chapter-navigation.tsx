@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface ChapterNavItem {
   slug: string;
@@ -28,8 +28,11 @@ export function ChapterNavigation({
   currentChapterSlug,
 }: ChapterNavigationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isCleanPath = pathname ? pathname.includes("/chuong/") : false;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -46,7 +49,10 @@ export function ChapterNavigation({
 
   const handleChapterSelect = (slug: string) => {
     setDropdownOpen(false);
-    router.push(`/truyen/${storySlug}?chuong-id=${slug}`);
+    const url = isCleanPath
+      ? `/truyen/${storySlug}/chuong/${slug}`
+      : `/truyen/${storySlug}?chuong-id=${slug}`;
+    router.push(url);
   };
 
   return (
@@ -57,7 +63,11 @@ export function ChapterNavigation({
       {/* Previous Chapter button */}
       {previousSlug ? (
         <Link
-          href={`/truyen/${storySlug}?chuong-id=${previousSlug}`}
+          href={
+            isCleanPath
+              ? `/truyen/${storySlug}/chuong/${previousSlug}`
+              : `/truyen/${storySlug}?chuong-id=${previousSlug}`
+          }
           className="chapter-navigation__btn chapter-navigation__btn--prev"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -137,7 +147,11 @@ export function ChapterNavigation({
       {/* Next Chapter button */}
       {nextSlug ? (
         <Link
-          href={`/truyen/${storySlug}?chuong-id=${nextSlug}`}
+          href={
+            isCleanPath
+              ? `/truyen/${storySlug}/chuong/${nextSlug}`
+              : `/truyen/${storySlug}?chuong-id=${nextSlug}`
+          }
           className="chapter-navigation__btn chapter-navigation__btn--next"
         >
           <span className="chapter-navigation__btn-text">Chương sau</span>

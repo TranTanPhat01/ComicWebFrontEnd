@@ -56,24 +56,8 @@ export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Danh sách các slug truyện nổi bật mặc định cố định
-  const FEATURED_SLUGS = [
-    "chong-sach-se-dung-giay-tham-dau-cua-thu-ky-toi-sat-phat-quyet-doan",
-    "phieu-an-nam-ngan-te",
-    "bo-la-ma-vuong-sua-chua",
-    "nam-sat-phong-than-nu-chinh-nguoc-van-khong-phuong-boi-nua",
-    "truong-mau-giao-than-nui",
-    "cong-tu-am-ve-cua-ngai-trom-nha-roi"
-  ];
-
   const getFeaturedStories = () => {
     if (!stories) return [];
-    const filtered = stories.filter((s) => FEATURED_SLUGS.includes(s.slug));
-    if (filtered.length > 0) {
-      return filtered
-        .sort((a, b) => FEATURED_SLUGS.indexOf(a.slug) - FEATURED_SLUGS.indexOf(b.slug))
-        .slice(0, 5);
-    }
     return stories.slice(0, 5);
   };
 
@@ -140,7 +124,9 @@ export function FeaturedStoryHero({ stories }: FeaturedStoryHeroProps) {
     return null;
   }
 
-  const genres = getPlaceholderGenres(currentStory.slug, currentStory.status);
+  const genres = currentStory.genres && currentStory.genres.length > 0
+    ? currentStory.genres
+    : getPlaceholderGenres(currentStory.slug, currentStory.status);
 
   return (
     <section className="hero-section" aria-label="Truyện nổi bật">

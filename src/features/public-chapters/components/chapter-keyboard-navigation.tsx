@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface KeyboardNavigationProps {
   storySlug: string;
@@ -15,6 +15,9 @@ export function ChapterKeyboardNavigation({
   nextSlug,
 }: KeyboardNavigationProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isCleanPath = pathname ? pathname.includes("/chuong/") : false;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -34,9 +37,15 @@ export function ChapterKeyboardNavigation({
       }
 
       if (event.key === "ArrowLeft" && previousSlug) {
-        router.push(`/truyen/${storySlug}?chuong-id=${previousSlug}`);
+        const url = isCleanPath
+          ? `/truyen/${storySlug}/chuong/${previousSlug}`
+          : `/truyen/${storySlug}?chuong-id=${previousSlug}`;
+        router.push(url);
       } else if (event.key === "ArrowRight" && nextSlug) {
-        router.push(`/truyen/${storySlug}?chuong-id=${nextSlug}`);
+        const url = isCleanPath
+          ? `/truyen/${storySlug}/chuong/${nextSlug}`
+          : `/truyen/${storySlug}?chuong-id=${nextSlug}`;
+        router.push(url);
       }
     };
 

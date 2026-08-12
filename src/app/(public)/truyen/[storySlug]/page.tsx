@@ -355,12 +355,24 @@ export default async function storyPage({ params, searchParams }: StoryPageProps
     const chapterSlug = chuongId.startsWith("chuong-") ? chuongId : `chuong-${chuongId}`;
     const chapterResponse = await getCachedPublicChapter(storySlug, chapterSlug);
     if (chapterResponse.success && chapterResponse.data) {
+      const allChapters = story.chapters
+        ? [...story.chapters]
+            .sort((a, b) => a.number - b.number)
+            .map((c) => ({
+              slug: c.slug,
+              number: c.number,
+              title: c.title ?? "",
+            }))
+        : [];
+
       return (
         <ChapterScreen
           chapter={chapterResponse.data}
           storySlug={storySlug}
           storyTitle={story.title}
           coverUrl={story.coverUrl || undefined}
+          allChapters={allChapters}
+          currentChapterSlug={chapterSlug}
         />
       );
     }

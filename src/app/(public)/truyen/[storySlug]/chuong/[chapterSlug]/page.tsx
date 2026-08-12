@@ -225,11 +225,15 @@ export default async function chapterPage({ params }: ChapterPageProps) {
   const storyResponse = await getCachedStory(storySlug);
   const storyData = storyResponse.success ? storyResponse.data : null;
   const storyTitle = storyData?.title ?? "Truyện";
-  const allChapters = storyData?.chapters?.map((c) => ({
-    slug: c.slug,
-    number: c.number,
-    title: c.title ?? "",
-  })) ?? [];
+  const allChapters = storyData?.chapters
+    ? [...storyData.chapters]
+        .sort((a, b) => a.number - b.number)
+        .map((c) => ({
+          slug: c.slug,
+          number: c.number,
+          title: c.title ?? "",
+        }))
+    : [];
 
   return (
     <ChapterScreen
