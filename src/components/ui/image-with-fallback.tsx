@@ -20,12 +20,13 @@ export function ImageWithFallback({
 }: ImageWithFallbackProps) {
   const [error, setError] = useState(false);
 
-  const getInitials = (text: string) => {
+  const getInitials = (text?: string) => {
+    if (!text || typeof text !== "string") return "";
     return text
       .trim()
       .split(/\s+/)
       .slice(0, 2)
-      .map((word) => word[0])
+      .map((word) => word ? word[0] : "")
       .join("")
       .toUpperCase();
   };

@@ -76,7 +76,7 @@ export function timeAgo(dateString: string): string {
  * Translates English text from database seeds to Vietnamese.
  */
 export function translateText(text: string | null | undefined): string {
-  if (!text) return "";
+  if (!text || typeof text !== "string") return "";
   const t = text.trim();
 
   // Mappings for unaccented titles from database
