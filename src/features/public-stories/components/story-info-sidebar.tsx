@@ -36,7 +36,7 @@ export function StoryInfoSidebar({ story }: StoryInfoSidebarProps) {
           <div className="story-info-sidebar__item">
             <dt className="story-info-sidebar__label">Trạng thái</dt>
             <dd className="story-info-sidebar__value">
-              <span className={`status-badge-compact status-badge-compact--${story.status.toLowerCase()}`}>
+              <span className={`status-badge-compact status-badge-compact--${(story.status || "").toLowerCase()}`}>
                 {(story.status as string) === "Ongoing" || (story.status as string) === "Published" ? "Đang tiến hành" : 
                  (story.status as string) === "Completed" ? "Hoàn thành" : 
                  (story.status as string) === "Hiatus" ? "Tạm ngưng" : "Đã hủy"}

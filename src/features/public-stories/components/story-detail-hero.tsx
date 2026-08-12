@@ -98,7 +98,7 @@ export function StoryDetailHero({
         {/* Text info block */}
         <div className="story-detail-hero__info">
           <div className="story-detail-hero__status-row">
-            <span className={`story-detail-hero__status-badge story-detail-hero__status-badge--${story.status.toLowerCase()}`}>
+            <span className={`story-detail-hero__status-badge story-detail-hero__status-badge--${(story.status || "").toLowerCase()}`}>
               {(story.status as string) === "Ongoing" || (story.status as string) === "Published" ? "Đang tiến hành" : 
                (story.status as string) === "Completed" ? "Đã hoàn thành" : 
                (story.status as string) === "Hiatus" ? "Tạm ngưng" : "Đã hủy"}

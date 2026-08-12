@@ -8,8 +8,8 @@ interface TopReadStoriesProps {
   stories: PublicStoryListItemDto[];
 }
 
-function getPlaceholderGenres(slug: string): string[] {
-  const normalized = slug.toLowerCase();
+function getPlaceholderGenres(slug?: string): string[] {
+  const normalized = (slug || "").toLowerCase();
   if (normalized.includes("toan-chuc-phap-su")) {
     return ["Huyền Huyễn", "Đô Thị"];
   }

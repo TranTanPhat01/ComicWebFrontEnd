@@ -13,12 +13,12 @@ interface FeaturedStoryHeroProps {
 }
 
 // Map slugs to genres to reproduce high fidelity visual mockups
-function getPlaceholderGenres(slug: string, status: string): string[] {
-  const normalized = slug.toLowerCase();
+function getPlaceholderGenres(slug?: string, status?: string): string[] {
+  const normalized = (slug || "").toLowerCase();
   
   // Translate status to Vietnamese
   let statusLabel = "Truyện Tranh";
-  const st = status.toLowerCase();
+  const st = (status || "").toLowerCase();
   if (st === "published" || st === "ongoing") {
     statusLabel = "Đang tiến hành";
   } else if (st === "completed") {
