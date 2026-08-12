@@ -39,6 +39,21 @@ export function ChapterScreen({
   // Check localStorage on mount/chapter change
   useEffect(() => {
     try {
+      // Kiểm tra xem có mở khóa toàn trang (global) chưa và đã hết hạn 24h chưa
+      const globalUnlockTimeStr = localStorage.getItem("global_unlock_expiry");
+      let isGloballyUnlocked = false;
+      if (globalUnlockTimeStr) {
+        const globalUnlockTime = parseInt(globalUnlockTimeStr, 10);
+        if (!isNaN(globalUnlockTime)) {
+          const isExpired = Date.now() - globalUnlockTime > ONE_DAY_MS;
+          if (!isExpired) {
+            isGloballyUnlocked = true;
+          } else {
+            localStorage.removeItem("global_unlock_expiry");
+          }
+        }
+      }
+
       const unlockedChapters = JSON.parse(localStorage.getItem("unlocked_chapters") || "[]");
       const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
 
@@ -57,7 +72,7 @@ export function ChapterScreen({
         }
       }
 
-      if (isChapterUnlocked || isStoryUnlocked) {
+      if (isGloballyUnlocked || isChapterUnlocked || isStoryUnlocked) {
         setIsLocked(false);
       } else {
         setIsLocked(chapter.isLocked);
@@ -92,7 +107,10 @@ export function ChapterScreen({
         localStorage.setItem("unlocked_chapters", JSON.stringify(unlockedChapters));
       }
 
-      // 2. Mở khóa toàn bộ truyện trong 24 giờ
+      // 2. Mở khóa toàn bộ website trong 24 giờ
+      localStorage.setItem("global_unlock_expiry", Date.now().toString());
+
+      // 3. Mở khóa toàn bộ truyện hiện tại trong 24 giờ (để tương thích ngược)
       const unlockedStories = JSON.parse(localStorage.getItem("unlocked_stories_expiry") || "{}");
       unlockedStories[storySlug] = Date.now();
       localStorage.setItem("unlocked_stories_expiry", JSON.stringify(unlockedStories));
