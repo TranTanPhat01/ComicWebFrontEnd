@@ -13,8 +13,8 @@ import { CompletedStoriesSection } from "./completed-stories-section";
 import { NewsletterForm } from "./newsletter-form";
 import { env } from "@/lib/env";
 import { DEMO_STORIES } from "../demo/demo-stories";
-import { parsePaginatedEnvelope } from "@/lib/api/parse-envelope";
-import type { GenreOptionDto, PublicStoryListItemDto } from "../types/public-story.types";
+import { parseEnvelopeData, parsePaginatedEnvelope } from "@/lib/api/parse-envelope";
+import type { GenreOptionDto, PublicStoryListItemDto, PublicStoryDetailDto } from "../types/public-story.types";
 
 interface HomeScreenProps {
   searchParams?: {
@@ -123,27 +123,29 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
 
   featuredResults.forEach((res) => {
     if (res.success && res.data) {
-      const detail = res.data;
-      featuredStories.push({
-        id: detail.id,
-        slug: detail.slug,
-        title: detail.title,
-        description: detail.description,
-        coverUrl: detail.coverUrl,
-        authorName: detail.authorName,
-        status: detail.status,
-        genres: detail.genres,
-        chapterCount: detail.chapters?.length ?? 0,
-        latestChapter: detail.chapters && detail.chapters.length > 0
-          ? detail.chapters[detail.chapters.length - 1]
-          : null,
-        publishedAt: detail.publishedAt,
-        updatedAt: detail.updatedAt,
-        averageRating: detail.averageRating,
-        ratingCount: detail.ratingCount,
-        myRating: detail.myRating,
-        viewCount: detail.viewCount,
-      });
+      const detail = parseEnvelopeData<PublicStoryDetailDto>(res.data);
+      if (detail) {
+        featuredStories.push({
+          id: detail.id,
+          slug: detail.slug,
+          title: detail.title,
+          description: detail.description,
+          coverUrl: detail.coverUrl,
+          authorName: detail.authorName,
+          status: detail.status,
+          genres: detail.genres,
+          chapterCount: detail.chapters?.length ?? 0,
+          latestChapter: detail.chapters && detail.chapters.length > 0
+            ? detail.chapters[detail.chapters.length - 1]
+            : null,
+          publishedAt: detail.publishedAt,
+          updatedAt: detail.updatedAt,
+          averageRating: detail.averageRating,
+          ratingCount: detail.ratingCount,
+          myRating: detail.myRating,
+          viewCount: detail.viewCount,
+        });
+      }
     }
   });
 

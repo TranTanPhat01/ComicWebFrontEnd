@@ -44,7 +44,11 @@ function getPlaceholderGenres(slug?: string, status?: string): string[] {
   if (normalized.includes("mot-minh-ta-dau")) {
     return ["Huyền Huyễn", "Hệ Thống", "Hành Động"];
   }
-  return [statusLabel, "Truyện Tranh"];
+  const result = [statusLabel];
+  if (statusLabel !== "Truyện Tranh") {
+    result.push("Truyện Tranh");
+  }
+  return result;
 }
 
 
