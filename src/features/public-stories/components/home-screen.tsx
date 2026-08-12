@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingState } from "@/components/feedback/loading-state";
-import { getGenres, getPublicStories } from "../api/public-stories.api";
+import { getGenres, getPublicStories, getPublicStoryBySlug } from "../api/public-stories.api";
 import { FeaturedStoryHero } from "./featured-story-hero";
 import { StoryFilterChips } from "./story-filter-chips";
 import { StoryGrid } from "./story-grid";
@@ -107,6 +107,46 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
     baseStories = parsePaginatedEnvelope<PublicStoryListItemDto>(baseResponse.data).items;
   }
 
+  // Fetch the specific default featured stories by their slugs in parallel
+  const FEATURED_SLUGS = [
+    "buoc-qua-canh-cua-la",
+    "tu-nay-nguoc-huong",
+    "chiec-chao-chong-dinh-nha-anh",
+    "mang-song-sinh-doi-no-tong-tai",
+    "hoc-ba-bi-toi-du-do-roi",
+    "chong-sach-se-dung-giay-tham-dau-cua-thu-ky-toi-sat-phat-quyet-doan",
+  ];
+
+  const featuredPromises = FEATURED_SLUGS.map((slug) => getPublicStoryBySlug(slug));
+  const featuredResults = await Promise.all(featuredPromises);
+  const featuredStories: PublicStoryListItemDto[] = [];
+
+  featuredResults.forEach((res) => {
+    if (res.success && res.data) {
+      const detail = res.data;
+      featuredStories.push({
+        id: detail.id,
+        slug: detail.slug,
+        title: detail.title,
+        description: detail.description,
+        coverUrl: detail.coverUrl,
+        authorName: detail.authorName,
+        status: detail.status,
+        genres: detail.genres,
+        chapterCount: detail.chapters?.length ?? 0,
+        latestChapter: detail.chapters && detail.chapters.length > 0
+          ? detail.chapters[detail.chapters.length - 1]
+          : null,
+        publishedAt: detail.publishedAt,
+        updatedAt: detail.updatedAt,
+        averageRating: detail.averageRating,
+        ratingCount: detail.ratingCount,
+        myRating: detail.myRating,
+        viewCount: detail.viewCount,
+      });
+    }
+  });
+
   let isFallbackMode = false;
 
   // Fallback to local high-fidelity demo stories in development mode when connection fails OR database is empty
@@ -161,9 +201,9 @@ export async function HomeScreen({ searchParams }: HomeScreenProps) {
   return (
     <div className="home-layout">
       {/* Hero Header Section */}
-      {baseStories.length > 0 && !search && !genre && page === 1 && (
+      {(featuredStories.length > 0 || baseStories.length > 0) && !search && !genre && page === 1 && (
         <div className="home-layout__hero">
-          <FeaturedStoryHero stories={baseStories} />
+          <FeaturedStoryHero stories={featuredStories.length > 0 ? featuredStories : baseStories} />
         </div>
       )}
 
