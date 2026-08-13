@@ -514,7 +514,7 @@ export function AdminStoriesScreen() {
                         alt="Preview bìa truyện"
                         style={{ width: "70px", height: "100px", objectFit: "cover", borderRadius: "4px", border: "1px solid var(--border-color)" }}
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/images/fallback-cover.jpg";
+                          (e.target as HTMLImageElement).src = "/images/fallback-cover.svg";
                         }}
                       />
                       <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
