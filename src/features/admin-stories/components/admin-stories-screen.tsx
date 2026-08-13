@@ -150,7 +150,7 @@ export function AdminStoriesScreen() {
     try {
       const response = await uploadStoryCoverBrowser(file);
       if (response.success) {
-        setDraft((d) => ({ ...d, coverImageUrl: response.data }));
+        setDraft((d) => ({ ...d, coverImageUrl: response.data.data }));
       } else {
         setUploadError(response.error.message || "Tải ảnh lên thất bại.");
       }

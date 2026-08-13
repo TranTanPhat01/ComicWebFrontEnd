@@ -41,3 +41,12 @@ export function createErrorResponse<T>(
 ): ApiResponse<T> {
   return { success: false, error, status };
 }
+
+/**
+ * Represents standard backend response wrapping envelope.
+ */
+export interface ApiEnvelope<T> {
+  data: T;
+  requestId: string;
+}
+

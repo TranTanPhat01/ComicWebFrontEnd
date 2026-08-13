@@ -7,7 +7,7 @@ import {
   browserPut,
 } from "@/lib/api/browser-api-client";
 import { API_ROUTES } from "@/constants/api-routes";
-import type { ApiResponse } from "@/lib/api/api-response";
+import type { ApiResponse, ApiEnvelope } from "@/lib/api/api-response";
 import type { PaginatedResponse } from "@/types/pagination";
 import type {
   AdminStoryListItemDto,
@@ -138,7 +138,7 @@ export async function getAdminStatsBrowser(): Promise<ApiResponse<AdminStatsDto>
  */
 export async function uploadStoryCoverBrowser(
   file: File
-): Promise<ApiResponse<string>> {
+): Promise<ApiResponse<ApiEnvelope<string>>> {
   const formData = new FormData();
   formData.append("file", file);
   return browserPost(API_ROUTES.admin.upload.image, formData);
