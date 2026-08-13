@@ -147,6 +147,13 @@ export function resolveImageUrl(src?: string | null): string {
     "http://localhost:8080";
 
   const cleanApiUrl = apiUrl.replace(/\/+$/, "");
+  const isProductionBackend = /onrender\.com/i.test(cleanApiUrl);
+
+  // If it's a legacy uploads path on Render production backend, we know it's permanently lost.
+  // Bypass requesting it and return the fallback cover directly to avoid browser 404 logs.
+  if (isProductionBackend && (src.includes("/uploads/") || src.startsWith("uploads/"))) {
+    return fallback;
+  }
 
   // Case B: If it's a localhost absolute URL, strip it and replace with cleanApiUrl
   if (
@@ -156,6 +163,12 @@ export function resolveImageUrl(src?: string | null): string {
     src.startsWith("https://127.0.0.1:")
   ) {
     const relativePart = src.replace(/^https?:\/\/(localhost|127\.0\.0\.1):\d+/, "");
+
+    // If target is production backend, localhost legacy uploads are also lost.
+    if (isProductionBackend && relativePart.includes("/uploads/")) {
+      return fallback;
+    }
+
     const normalizedPath = relativePart.startsWith("/") ? relativePart : `/${relativePart}`;
     return `${cleanApiUrl}${normalizedPath}`;
   }
