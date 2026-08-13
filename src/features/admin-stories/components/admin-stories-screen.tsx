@@ -112,6 +112,19 @@ function formatDateTime(dateStr: string) {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function toRelativeUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.startsWith("/uploads")) {
+      return parsed.pathname;
+    }
+  } catch {
+    // If it's already a relative path, return it as is
+  }
+  return url;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export function AdminStoriesScreen() {
   const [stories, setStories] = useState<AdminStoryListItemDto[]>([]);
@@ -150,7 +163,7 @@ export function AdminStoriesScreen() {
     try {
       const response = await uploadStoryCoverBrowser(file);
       if (response.success) {
-        setDraft((d) => ({ ...d, coverImageUrl: response.data.data }));
+        setDraft((d) => ({ ...d, coverImageUrl: toRelativeUrl(response.data.data) }));
       } else {
         setUploadError(response.error.message || "Tải ảnh lên thất bại.");
       }
