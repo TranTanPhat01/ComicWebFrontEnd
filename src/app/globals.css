@@ -3012,12 +3012,9 @@ html.light .public-header__genres-dropdown {
 }
 
 .chapter-navigation--bottom {
-  position: sticky;
-  bottom: 80px;
   z-index: 1000;
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 600px;
-  margin: var(--space-8) auto;
   padding: 0.6rem 1.25rem;
   border-radius: 9999px;
   backdrop-filter: blur(12px);
@@ -3029,6 +3026,20 @@ html.light .public-header__genres-dropdown {
   align-items: center;
   gap: 0.5rem;
   transition: background-color var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.chapter-navigation--bottom.is-fixed {
+  position: fixed;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+}
+
+.chapter-navigation--bottom.is-stopped {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
 }
 
 /* Theme specific overrides for sticky background and border */
@@ -3051,7 +3062,7 @@ html.light .public-header__genres-dropdown {
 }
 
 .chapter-reader-screen__layout {
-  padding-bottom: 80px !important;
+  padding-bottom: 120px !important;
 }
 
 .chapter-navigation__btn {
@@ -3579,12 +3590,14 @@ html.light .public-header__genres-dropdown {
   .back-to-top-btn {
     bottom: 150px !important;
   }
-  .chapter-navigation--bottom {
+  .chapter-navigation--bottom.is-fixed {
     bottom: 24px;
-    margin: var(--space-6) auto;
+  }
+  .chapter-navigation--bottom.is-stopped {
+    bottom: 24px;
   }
   .chapter-reader-screen__layout {
-    padding-bottom: 60px !important;
+    padding-bottom: 100px !important;
   }
 }
 

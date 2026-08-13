@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ChapterReaderHeader } from "./chapter-reader-header";
 import { ChapterNavigation } from "./chapter-navigation";
 import { ChapterContent } from "./chapter-content";
@@ -35,6 +35,33 @@ export function ChapterScreen({
   const [isLocked, setIsLocked] = useState(chapter.isLocked);
   // dismissed = user clicked X on popup -> show locked-page instead of popup
   const [dismissed, setDismissed] = useState(false);
+
+  const [isStopped, setIsStopped] = useState(false);
+  const boundaryRef = useRef<HTMLDivElement>(null);
+
+  // Bounded fixed navigation behavior
+  useEffect(() => {
+    const handleScrollAndResize = () => {
+      if (!boundaryRef.current) return;
+      const boundaryRect = boundaryRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth <= 768;
+      const fixedBottom = isMobile ? 24 : 80;
+      const stoppedBottom = 24;
+      const stopThreshold = window.innerHeight - fixedBottom + stoppedBottom;
+      setIsStopped(boundaryRect.bottom <= stopThreshold);
+    };
+
+    // Initial check
+    handleScrollAndResize();
+
+    window.addEventListener("scroll", handleScrollAndResize, { passive: true });
+    window.addEventListener("resize", handleScrollAndResize);
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollAndResize);
+      window.removeEventListener("resize", handleScrollAndResize);
+    };
+  }, [chapter.id, chapter.slug, isLocked]);
 
   // Check localStorage on mount/chapter change
   useEffect(() => {
@@ -156,49 +183,52 @@ export function ChapterScreen({
         publishedAt={chapter.publishedAt}
       />
 
-      <div className="container chapter-reader-screen__layout">
-        {/* Main Text Content Article */}
-        <div className="chapter-reader-screen__content-wrapper">
-          {isLocked ? (
-            dismissed ? (
-              <div className="chapter-locked-notice">
-                <div className="chapter-locked-notice__icon">🔒</div>
-                <h2 className="chapter-locked-notice__title">Chương này đã bị khoá</h2>
-                <p className="chapter-locked-notice__desc">
-                  Bạn vui lòng ấn vào link Shopee trên Popup để mở khoá nội dung.
-                  <br />
-                  Nếu lỡ ấn ✕, vui lòng tải lại trang hoặc bấm nút dưới đây để hiện lại popup mở khóa.
-                </p>
-                <button
-                  className="chapter-locked-notice__reopen-btn"
-                  onClick={() => setDismissed(false)}
-                >
-                  🛒 Mở popup Shopee lại
-                </button>
-              </div>
+      <div ref={boundaryRef} className="chapter-reader-boundary" style={{ position: "relative" }}>
+        <div className="container chapter-reader-screen__layout">
+          {/* Main Text Content Article */}
+          <div className="chapter-reader-screen__content-wrapper">
+            {isLocked ? (
+              dismissed ? (
+                <div className="chapter-locked-notice">
+                  <div className="chapter-locked-notice__icon">🔒</div>
+                  <h2 className="chapter-locked-notice__title">Chương này đã bị khoá</h2>
+                  <p className="chapter-locked-notice__desc">
+                    Bạn vui lòng ấn vào link Shopee trên Popup để mở khoá nội dung.
+                    <br />
+                    Nếu lỡ ấn ✕, vui lòng tải lại trang hoặc bấm nút dưới đây để hiện lại popup mở khóa.
+                  </p>
+                  <button
+                    className="chapter-locked-notice__reopen-btn"
+                    onClick={() => setDismissed(false)}
+                  >
+                    🛒 Mở popup Shopee lại
+                  </button>
+                </div>
+              ) : (
+                <div className="chapter-content-placeholder" style={{ filter: "blur(12px)", opacity: 0.15, pointerEvents: "none", userSelect: "none", margin: "3rem auto", maxWidth: "800px" }}>
+                  <p style={{ fontSize: "1.2rem", marginBottom: "1rem", lineHeight: "1.8" }}>Nội dung chương này đã bị ẩn đi. Vui lòng hoàn thành các bước trong popup để tiếp tục đọc truyện.</p>
+                  <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Đường đi dài hơn, những bước chân chậm rãi trên cát bụi thời gian. Nhìn về phía xa xăm, nơi chân trời giao thoa với đại dương...</p>
+                  <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Gió thổi qua hàng thông, tiếng xào xạc hòa cùng tiếng sóng biển vỗ rì rào. Một bóng người thầm lặng đứng đợi bóng tối buông xuống...</p>
+                </div>
+              )
             ) : (
-              <div className="chapter-content-placeholder" style={{ filter: "blur(12px)", opacity: 0.15, pointerEvents: "none", userSelect: "none", margin: "3rem auto", maxWidth: "800px" }}>
-                <p style={{ fontSize: "1.2rem", marginBottom: "1rem", lineHeight: "1.8" }}>Nội dung chương này đã bị ẩn đi. Vui lòng hoàn thành các bước trong popup để tiếp tục đọc truyện.</p>
-                <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Đường đi dài hơn, những bước chân chậm rãi trên cát bụi thời gian. Nhìn về phía xa xăm, nơi chân trời giao thoa với đại dương...</p>
-                <p style={{ fontSize: "1.1rem", marginBottom: "1rem", lineHeight: "1.8" }}>Gió thổi qua hàng thông, tiếng xào xạc hòa cùng tiếng sóng biển vỗ rì rào. Một bóng người thầm lặng đứng đợi bóng tối buông xuống...</p>
-              </div>
-            )
-          ) : (
-            <ChapterContent content={chapter.content} />
+              <ChapterContent content={chapter.content} />
+            )}
+          </div>
+
+          {/* Bottom Navigation */}
+          {!isLocked && (
+            <ChapterNavigation
+              storySlug={storySlug}
+              previousSlug={chapter.previousChapter?.slug ?? null}
+              nextSlug={chapter.nextChapter?.slug ?? null}
+              allChapters={allChapters}
+              currentChapterSlug={currentChapterSlug ?? chapter.slug}
+              position="bottom"
+              isStopped={isStopped}
+            />
           )}
         </div>
-
-        {/* Bottom Navigation */}
-        {!isLocked && (
-          <ChapterNavigation
-            storySlug={storySlug}
-            previousSlug={chapter.previousChapter?.slug ?? null}
-            nextSlug={chapter.nextChapter?.slug ?? null}
-            allChapters={allChapters}
-            currentChapterSlug={currentChapterSlug ?? chapter.slug}
-            position="bottom"
-          />
-        )}
       </div>
 
       {/* -- Popup when LOCKED and not yet dismissed -- */}

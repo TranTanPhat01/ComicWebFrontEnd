@@ -17,6 +17,7 @@ interface ChapterNavigationProps {
   position?: "top" | "bottom";
   allChapters?: ChapterNavItem[];
   currentChapterSlug?: string;
+  isStopped?: boolean;
 }
 
 export function ChapterNavigation({
@@ -26,6 +27,7 @@ export function ChapterNavigation({
   position = "top",
   allChapters,
   currentChapterSlug,
+  isStopped = false,
 }: ChapterNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,7 +59,9 @@ export function ChapterNavigation({
 
   return (
     <nav
-      className={`chapter-navigation chapter-navigation--${position}`}
+      className={`chapter-navigation chapter-navigation--${position} ${
+        position === "bottom" ? (isStopped ? "is-stopped" : "is-fixed") : ""
+      }`}
       aria-label={`Điều hướng chương (${position === "top" ? "trên" : "dưới"})`}
     >
       {/* Previous Chapter button */}
