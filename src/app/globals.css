@@ -3014,7 +3014,7 @@ html.light .public-header__genres-dropdown {
 .chapter-navigation--bottom {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: 80px;
   transform: translateX(-50%);
   z-index: 1000;
   width: calc(100% - 32px);
@@ -3053,7 +3053,7 @@ html.light .public-header__genres-dropdown {
 }
 
 .chapter-reader-screen__layout {
-  padding-bottom: 140px !important;
+  padding-bottom: 180px !important;
 }
 
 .chapter-navigation__btn {
@@ -3580,6 +3580,12 @@ html.light .public-header__genres-dropdown {
   }
   .back-to-top-btn {
     bottom: 150px !important;
+  }
+  .chapter-navigation--bottom {
+    bottom: 24px;
+  }
+  .chapter-reader-screen__layout {
+    padding-bottom: 120px !important;
   }
 }
 
