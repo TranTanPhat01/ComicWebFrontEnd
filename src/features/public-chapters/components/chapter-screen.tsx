@@ -7,7 +7,6 @@ import { ChapterContent } from "./chapter-content";
 import { ReaderSettings } from "@/features/public-chapters/components/reader-settings";
 import { ChapterKeyboardNavigation } from "./chapter-keyboard-navigation";
 import { ReadingProgress } from "./reading-progress";
-import { BackToTopButton } from "./back-to-top-button";
 import { useReadingHistory } from "../hooks/use-reading-history";
 import type { PublicChapterDetailDto } from "../types/public-chapter.types";
 import { trackAffiliateClickBrowser } from "../api/public-chapters-browser.api";
@@ -304,9 +303,6 @@ export function ChapterScreen({
         </div>
       )}
 
-
-      {/* Back To Top Action */}
-      <BackToTopButton />
     </div>
   );
 }
