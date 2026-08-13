@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAdminSettingsBrowser, saveAdminSettingsBrowser } from "@/features/admin-settings/api/admin-settings-browser.api";
 import type { SettingItemDto } from "@/features/public-chapters/api/public-chapters-browser.api";
+import { resolveImageUrl } from "@/lib/utils";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SettingItemDto[]>([]);
@@ -294,7 +295,7 @@ export default function AdminSettingsPage() {
                     {globalAffiliateImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={globalAffiliateImage}
+                        src={resolveImageUrl(globalAffiliateImage)}
                         alt="Ảnh sản phẩm demo"
                         className="preview-mockup-image"
                         onError={(e) => {

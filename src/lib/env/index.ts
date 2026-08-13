@@ -8,9 +8,9 @@
 export const env = {
   /**
    * Backend API base URL.
-   * Priority: API_BASE_URL (server), NEXT_PUBLIC_API_BASE_URL (client/server fallback).
+   * Priority: NEXT_PUBLIC_API_URL (canonical), NEXT_PUBLIC_API_BASE_URL (fallback), API_BASE_URL (server fallback).
    */
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost:8080",
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? "http://localhost:8080",
 
   /**
    * Frontend Application URL.

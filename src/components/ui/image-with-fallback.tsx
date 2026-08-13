@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image, { ImageProps } from "next/image";
+import { resolveImageUrl } from "@/lib/utils";
 
 interface ImageWithFallbackProps extends Omit<ImageProps, "src" | "onError"> {
   src: string | null | undefined;
@@ -31,11 +32,8 @@ export function ImageWithFallback({
       .toUpperCase();
   };
 
-  const sanitizedSrc = src
-    ? src.replace(/^https?:\/\/localhost:\d+/, "").replace(/^https?:\/\/127\.0\.0\.1:\d+/, "")
-    : src;
-
-  const hasImage = sanitizedSrc && !error;
+  const resolved = resolveImageUrl(src);
+  const hasImage = src && src.trim() !== "" && !error;
 
 
 
@@ -43,7 +41,7 @@ export function ImageWithFallback({
     <div className="image-container-wrapper">
       {hasImage ? (
         <img
-          src={sanitizedSrc!}
+          src={resolved}
           alt={alt}
           onError={() => {
             setError(true);

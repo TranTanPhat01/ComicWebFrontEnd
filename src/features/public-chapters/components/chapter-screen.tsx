@@ -10,6 +10,7 @@ import { ReadingProgress } from "./reading-progress";
 import { useReadingHistory } from "../hooks/use-reading-history";
 import type { PublicChapterDetailDto } from "../types/public-chapter.types";
 import { trackAffiliateClickBrowser } from "../api/public-chapters-browser.api";
+import { resolveImageUrl } from "@/lib/utils";
 
 interface ChapterScreenProps {
   chapter: PublicChapterDetailDto;
@@ -266,7 +267,7 @@ export function ChapterScreen({
               <div className="affiliate-modal-image-wrapper">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={chapter.affiliateImage}
+                  src={resolveImageUrl(chapter.affiliateImage)}
                   alt="Sản phẩm Shopee"
                   className="affiliate-modal-image"
                   onError={(e) => {

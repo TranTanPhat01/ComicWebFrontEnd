@@ -24,6 +24,7 @@ import type {
   CreateStoryRequestDto,
   UpdateStoryRequestDto,
 } from "../types/admin-story.types";
+import { resolveImageUrl } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface StoryFormDraft {
@@ -148,6 +149,7 @@ export function AdminStoriesScreen() {
   const [draft, setDraft] = useState<StoryFormDraft>(emptyDraft);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,17 +160,25 @@ export function AdminStoriesScreen() {
       return;
     }
 
+    // Use URL.createObjectURL for local preview ONLY during upload
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+
     setUploading(true);
     setUploadError("");
     try {
       const response = await uploadStoryCoverBrowser(file);
       if (response.success) {
-        setDraft((d) => ({ ...d, coverImageUrl: toRelativeUrl(response.data.data) }));
+        const relativeUrl = toRelativeUrl(response.data.data);
+        setDraft((d) => ({ ...d, coverImageUrl: relativeUrl }));
+        setPreviewUrl("");
       } else {
         setUploadError(response.error.message || "Tải ảnh lên thất bại.");
+        setPreviewUrl("");
       }
     } catch {
       setUploadError("Có lỗi xảy ra khi kết nối server.");
+      setPreviewUrl("");
     } finally {
       setUploading(false);
     }
@@ -230,6 +240,7 @@ export function AdminStoriesScreen() {
     setError(null);
     setUploadError("");
     setUploading(false);
+    setPreviewUrl("");
     setModalOpen(true);
   };
 
@@ -250,6 +261,7 @@ export function AdminStoriesScreen() {
     setError(null);
     setUploadError("");
     setUploading(false);
+    setPreviewUrl("");
     setModalOpen(true);
 
     const response = await getAdminStoryByIdBrowser(story.id);
@@ -277,6 +289,7 @@ export function AdminStoriesScreen() {
     setEditingId(null);
     setDraft(emptyDraft);
     setError(null);
+    setPreviewUrl("");
   };
 
   // ── CRUD handlers ────────────────────────────────────────────────────────────
@@ -519,19 +532,22 @@ export function AdminStoriesScreen() {
                       ⚠️ {uploadError}
                     </span>
                   )}
-                  {draft.coverImageUrl && (
+                  {(draft.coverImageUrl || previewUrl) && (
                     <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={draft.coverImageUrl}
+                        src={previewUrl || resolveImageUrl(draft.coverImageUrl)}
                         alt="Preview bìa truyện"
                         style={{ width: "70px", height: "100px", objectFit: "cover", borderRadius: "4px", border: "1px solid var(--border-color)" }}
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/images/fallback-cover.svg";
+                          const img = e.currentTarget;
+                          if (!img.src.endsWith("/images/fallback-cover.jpg")) {
+                            img.src = "/images/fallback-cover.jpg";
+                          }
                         }}
                       />
                       <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-                        Xem trước ảnh bìa truyện
+                        {previewUrl ? "Đang tải preview tệp..." : "Xem trước ảnh bìa truyện"}
                       </span>
                     </div>
                   )}
@@ -696,10 +712,17 @@ export function AdminStoriesScreen() {
                         {story.coverImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={story.coverImageUrl}
+                            src={resolveImageUrl(story.coverImageUrl)}
                             alt={story.title}
                             className="admin-table__cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              if (!img.src.endsWith("/images/fallback-cover.jpg")) {
+                                img.src = "/images/fallback-cover.jpg";
+                              } else {
+                                img.style.display = "none";
+                              }
+                            }}
                           />
                         ) : (
                           <div className="admin-table__cover-placeholder">📚</div>

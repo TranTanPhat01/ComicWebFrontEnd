@@ -127,3 +127,45 @@ export function translateText(text: string | null | undefined): string {
 
   return t;
 }
+
+/**
+ * Resolves an image path/URL to its fully-qualified production or development URL.
+ * Safely handles absolute/relative URLs, empty paths, and converts legacy localhost hosts.
+ */
+export function resolveImageUrl(src?: string | null): string {
+  const fallback = "/images/fallback-cover.jpg";
+
+  if (!src?.trim()) {
+    return fallback;
+  }
+
+  // Get the base API URL (handles NEXT_PUBLIC_API_URL, NEXT_PUBLIC_API_BASE_URL, and API_BASE_URL)
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.API_BASE_URL ||
+    "http://localhost:8080";
+
+  const cleanApiUrl = apiUrl.replace(/\/+$/, "");
+
+  // Case B: If it's a localhost absolute URL, strip it and replace with cleanApiUrl
+  if (
+    src.startsWith("http://localhost:") ||
+    src.startsWith("https://localhost:") ||
+    src.startsWith("http://127.0.0.1:") ||
+    src.startsWith("https://127.0.0.1:")
+  ) {
+    const relativePart = src.replace(/^https?:\/\/(localhost|127\.0\.0\.1):\d+/, "");
+    const normalizedPath = relativePart.startsWith("/") ? relativePart : `/${relativePart}`;
+    return `${cleanApiUrl}${normalizedPath}`;
+  }
+
+  // Case D: If it starts with http:// or https:// (and is not localhost), it's a valid external URL.
+  if (/^https?:\/\//i.test(src)) {
+    return src;
+  }
+
+  // Case C: If it's a relative path, prefix it with the API URL.
+  const normalizedPath = src.startsWith("/") ? src : `/${src}`;
+  return `${cleanApiUrl}${normalizedPath}`;
+}
