@@ -41,6 +41,23 @@ export function ReaderSettings() {
     applySettings(savedTheme, savedFitMode, savedSpacing);
   }, []);
 
+  // Manage class on the reader container when settings panel is toggled
+  useEffect(() => {
+    const container = document.getElementById("chapter-reader-container");
+    if (container) {
+      if (isOpen) {
+        container.classList.add("reader-settings-open");
+      } else {
+        container.classList.remove("reader-settings-open");
+      }
+    }
+    return () => {
+      if (container) {
+        container.classList.remove("reader-settings-open");
+      }
+    };
+  }, [isOpen]);
+
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
     localStorage.setItem("reader-theme", newTheme);
