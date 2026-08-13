@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export function ScrollToTop() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => setVisible(window.scrollY > 400);
@@ -15,7 +17,9 @@ export function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!visible) return null;
+  const isChapterPage = pathname ? pathname.includes("/chuong/") : false;
+
+  if (!visible || isChapterPage) return null;
 
   return (
     <button
