@@ -160,8 +160,8 @@ export function resolveImageUrl(src?: string | null): string {
     return `${cleanApiUrl}${normalizedPath}`;
   }
 
-  // Case D: If it starts with http:// or https:// (and is not localhost), it's a valid external URL.
-  if (/^https?:\/\//i.test(src)) {
+  // Case D: If it starts with http:// or https:// (and is not localhost), it's a valid external URL (like Supabase, Cloudinary, etc.)
+  if (/^https?:\/\//i.test(src) && !/localhost|127\.0\.0\.1/i.test(src)) {
     return src;
   }
 

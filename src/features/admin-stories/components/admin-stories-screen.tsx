@@ -169,8 +169,12 @@ export function AdminStoriesScreen() {
     try {
       const response = await uploadStoryCoverBrowser(file);
       if (response.success) {
-        const relativeUrl = toRelativeUrl(response.data.data);
-        setDraft((d) => ({ ...d, coverImageUrl: relativeUrl }));
+        const uploadedUrl = response.data.data;
+        const isLocalhost = /localhost|127\.0\.0\.1/i.test(uploadedUrl);
+        const targetUrl = (uploadedUrl.startsWith("http") && !isLocalhost) 
+          ? uploadedUrl 
+          : toRelativeUrl(uploadedUrl);
+        setDraft((d) => ({ ...d, coverImageUrl: targetUrl }));
         setPreviewUrl("");
       } else {
         setUploadError(response.error.message || "Tải ảnh lên thất bại.");
