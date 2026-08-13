@@ -5,6 +5,23 @@ interface ChapterContentProps {
   content: string | null | undefined;
 }
 
+function formatContent(content: string): string {
+  if (!content) return "";
+
+  // Check if content already contains HTML tags (e.g. from scraped chapters)
+  const hasHtml = /<[a-z/][^>]*>/i.test(content);
+  if (hasHtml) {
+    return content;
+  }
+
+  // Plain text from manual story-posting: split by double newlines for paragraphs, and replace single newlines with <br />
+  return content
+    .split(/\r?\n\s*\r?\n/)
+    .filter((para) => para.trim() !== "")
+    .map((para) => `<p>${para.replace(/\r?\n/g, "<br />")}</p>`)
+    .join("");
+}
+
 export function ChapterContent({ content }: ChapterContentProps) {
   if (!content || content.trim() === "") {
     return (
@@ -17,10 +34,12 @@ export function ChapterContent({ content }: ChapterContentProps) {
     );
   }
 
+  const formattedContent = formatContent(content);
+
   return (
     <article 
       className="chapter-content" 
-      dangerouslySetInnerHTML={{ __html: content }} 
+      dangerouslySetInnerHTML={{ __html: formattedContent }} 
     />
   );
 }

@@ -173,7 +173,7 @@ export default function AdminSettingsPage() {
                     <div className="settings-label">
                       <span className="settings-label__text">Nhúng mã vào HEAD Script (Google Analytics, Facebook Pixel,...)</span>
                       <span className="settings-label__desc">Mã này sẽ tự động được inject vào thẻ &lt;head&gt; ngoài trang public của website.</span>
-                      
+
                       <div className="code-editor-mockup">
                         <div className="code-editor-header">
                           <div className="code-editor-dots">
